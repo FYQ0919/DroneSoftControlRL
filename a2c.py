@@ -191,19 +191,16 @@ class A2CAgent(object):
 
         value = self.critic.output
 
-        # MSE loss
-
-        loss = K.mean(K.square(y - value))
 
         # # Huber loss
 
-        # error = K.abs(y - value)
+        error = K.abs(y - value)
 
-        # quadratic = K.clip(error, 0.0, 1.0)
+        quadratic = K.clip(error, 0.0, 1.0)
 
-        # linear = error - quadratic
+        linear = error - quadratic
 
-        # loss = K.mean(0.5 * K.square(quadratic) + linear)
+        loss = K.mean(0.5 * K.square(quadratic) + linear)
 
         optimizer = Adam(lr=self.critic_lr)
 
@@ -343,35 +340,35 @@ def transform_input(responses, img_height, img_width):
 
 
 def interpret_action(action):
-    scaling_factor = 1.
+    scaling_factor = 30.
 
     if action == 0:
 
-        quad_offset = (0, 0, 0)
+        quad_offset = (100,100,100,100)
 
     elif action == 1:
 
-        quad_offset = (scaling_factor, 0, 0)
+        quad_offset = (100, 100,100+scaling_factor,100+scaling_factor)
 
     elif action == 2:
 
-        quad_offset = (0, scaling_factor, 0)
+        quad_offset = (100, 100+scaling_factor,100, 100+scaling_factor)
 
     elif action == 3:
 
-        quad_offset = (0, 0, scaling_factor)
+        quad_offset = (100+scaling_factor,100+scaling_factor,100+scaling_factor,100+scaling_factor)
 
     elif action == 4:
 
-        quad_offset = (-scaling_factor, 0, 0)
+        quad_offset = (100+scaling_factor, 100+scaling_factor, 100,100)
 
     elif action == 5:
 
-        quad_offset = (0, -scaling_factor, 0)
+        quad_offset = (100+scaling_factor, 100, 100+scaling_factor,100)
 
     elif action == 6:
 
-        quad_offset = (0, 0, -scaling_factor)
+        quad_offset = (100-scaling_factor, 100-scaling_factor, 100-scaling_factor,100-scaling_factor)
 
     return quad_offset
 
@@ -435,8 +432,6 @@ if __name__ == '__main__':
 
         critic_lr=args.critic_lr,
 
-        tau=args.tau,
-
         gamma=args.gamma,
 
         lambd=args.lambd,
@@ -464,14 +459,6 @@ if __name__ == '__main__':
             print('Last episode:', episode)
 
             episode += 1
-
-    if os.path.exists('save_stat/' + agent_name + '_highscore.scv'):
-        with open('save_stat/' + agent_name + '_highscore.csv', 'r') as f:
-            read = csv.reader(f)
-
-            highscoreY = float(next(reversed(list(read)))[0])
-
-            print('Best Y:', highscoreY)
 
     stats = []
 
@@ -593,8 +580,6 @@ if __name__ == '__main__':
 
         time_limit = 600
 
-        highscoreY = 0.
-
         if os.path.exists('save_stat/' + agent_name + '_stat.csv'):
             with open('save_stat/' + agent_name + '_stat.csv', 'r') as f:
                 read = csv.reader(f)
@@ -664,13 +649,13 @@ if __name__ == '__main__':
 
                     real_action = interpret_action(action)
 
-                    observe, reward, done, info = env.step(real_action)
+                    observe, reward, done, state = env.step(real_action)
 
                     image, vel = observe
 
                     try:
 
-                        if timestep < 3 and info['status'] == 'landed':
+                        if timestep < 3 :
                             raise Exception
 
                         image = transform_input(image, args.img_height, args.img_width)
@@ -694,14 +679,6 @@ if __name__ == '__main__':
                     score += reward
 
                     pmax += float(np.amax(policy))
-
-                    if info['Y'] > bestY:
-                        bestY = info['Y']
-
-                    print('%s | %.3f | %.3f' % (Action_Space[action], policy[action], policy[2]), end='\r')
-
-                    if args.verbose:
-                        print('Step %d Action %s Reward %.2f Info %s:' % (timestep, action, reward, info['status']))
 
                     if t >= args.horizon or done:
                         t = 0
@@ -734,7 +711,7 @@ if __name__ == '__main__':
 
                     episode, timestep, score, bestY, \
  \
-                    pmax, actor_loss, critic_loss, info['level'], info['status']
+                    pmax, actor_loss, critic_loss
 
                 ]
 
