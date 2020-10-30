@@ -7,6 +7,7 @@ object_pos = [200,0,10]
 #define boundary
 outZ = [-5, 20]
 outY = [-10,10]
+Action_Space = ['00', '+x', '+y', '+z', '-x', '-y', '-z']
 
 np.random.seed(10)
 
@@ -33,16 +34,16 @@ class windENV():
         self.cl.hoverAsync().join()
         self.cl.simPause(True)
         state_v = self.cl.getMultirotorState().kinematics_estimated.linear_velocity
-        Angle_acc = self.cl.getMultirotorState().kinematics_estimated.angular_acceleration
+        Img = self.cl.simGetImages([airsim.ImageRequest(1, airsim.ImageType.DepthVis, True)])
         state_v = np.array([state_v.x_val, state_v.y_val, state_v.z_val])
-        observation = [Angle_acc,state_v]
+        observation = [Img,state_v]
         return observation
 
     def step(self,speed):
         #Use givin action
         speed = [int(i) for i in speed]
         self.cl.simPause(False)
-        self.cl.moveByMotorPWMsAsync(speed[0], speed[1], speed[2],speed[3],speed[4],duration=self.duration)
+        self.cl.moveByVelocityAsync(speed[0], speed[1], speed[2],duration=self.duration)
         start = time.time()
         while time.time() - start < self.duration:
             #get states
@@ -66,9 +67,9 @@ class windENV():
         #compute reward
         reward = self.compute_reward(pos,velocity,angle_acc,stop)
 
-        angle_acc = np.array([angle_acc.x_val,angle_acc.y_val,angle_acc.z_val])
+        Img = self.cl.simGetImages([airsim.ImageRequest(1, airsim.ImageType.DepthVis, True)])
         velocity = np.array([velocity.x_val,velocity.y_val,velocity.z_val])
-        observation = [angle_acc,velocity]
+        observation = [Img,velocity]
         return  observation, reward, done, state
 
     def compute_reward(self, pos, velocity, angle_acc,stop):
