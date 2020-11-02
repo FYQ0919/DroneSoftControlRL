@@ -28,7 +28,7 @@ import os
 
 from Wind_env import windENV,Action_Space
 
-agent_name = 'ra2c'
+agent_name = 'a2c'
 
 
 class A2CAgent(object):
@@ -43,7 +43,7 @@ class A2CAgent(object):
 
         self.vel_size = 3
 
-        self.acc_size = 3
+
 
         self.actor_lr = actor_lr
 
@@ -116,11 +116,11 @@ class A2CAgent(object):
 
         vel = Input(shape=[self.vel_size])
 
-        # vel_process = Dense(6, kernel_initializer='he_normal', use_bias=False)(vel)
+        vel_process = Dense(6, kernel_initializer='he_normal', use_bias=False)(vel)
 
-        # vel_process = BatchNormalization()(vel_process)
+        vel_process = BatchNormalization()(vel_process)
 
-        # vel_process = Activation('tanh')(vel_process)
+        vel_process = Activation('tanh')(vel_process)
 
         state_process = image_process
 
@@ -194,7 +194,7 @@ class A2CAgent(object):
 
         # # Huber loss
 
-        error = K.abs(y - value)
+        error = tf.abs(y - value)
 
         quadratic = K.clip(error, 0.0, 1.0)
 
@@ -340,35 +340,37 @@ def transform_input(responses, img_height, img_width):
 
 
 def interpret_action(action):
-    scaling_factor = 30.
+    scaling_factor = 20
+
+    basic_speed = 20
 
     if action == 0:
 
-        quad_offset = (100,100,100,100)
+        quad_offset = (basic_speed,basic_speed,basic_speed,basic_speed)
 
     elif action == 1:
 
-        quad_offset = (100, 100,100+scaling_factor,100+scaling_factor)
+        quad_offset = (basic_speed, basic_speed,basic_speed+scaling_factor,basic_speed+scaling_factor)
 
     elif action == 2:
 
-        quad_offset = (100, 100+scaling_factor,100, 100+scaling_factor)
+        quad_offset = (basic_speed, basic_speed+scaling_factor,basic_speed, basic_speed+scaling_factor)
 
     elif action == 3:
 
-        quad_offset = (100+scaling_factor,100+scaling_factor,100+scaling_factor,100+scaling_factor)
+        quad_offset = (basic_speed+scaling_factor,basic_speed+scaling_factor,basic_speed+scaling_factor,basic_speed+scaling_factor)
 
     elif action == 4:
 
-        quad_offset = (100+scaling_factor, 100+scaling_factor, 100,100)
+        quad_offset = (basic_speed+scaling_factor, basic_speed+scaling_factor, basic_speed,basic_speed)
 
     elif action == 5:
 
-        quad_offset = (100+scaling_factor, 100, 100+scaling_factor,100)
+        quad_offset = (basic_speed+scaling_factor, basic_speed, basic_speed+scaling_factor,basic_speed)
 
     elif action == 6:
 
-        quad_offset = (100-scaling_factor, 100-scaling_factor, 100-scaling_factor,100-scaling_factor)
+        quad_offset = (basic_speed-scaling_factor, basic_speed-scaling_factor, basic_speed-scaling_factor,basic_speed-scaling_factor)
 
     return quad_offset
 
@@ -476,7 +478,7 @@ if __name__ == '__main__':
 
                 # stats
 
-                bestY, timestep, score, pmax = 0., 0, 0., 0.
+                timestep, score, pmax =  0, 0., 0.
 
                 observe = env.reset()
 
@@ -487,7 +489,7 @@ if __name__ == '__main__':
                     image = transform_input(image, args.img_height, args.img_width)
 
                 except:
-
+                    print('False Done')
                     continue
 
                 history = np.stack([image] * args.seqsize, axis=1)
@@ -499,20 +501,6 @@ if __name__ == '__main__':
                 while not done:
 
                     timestep += 1
-
-                    # snapshot = np.zeros([0, args.img_width, 1])
-
-                    # for snap in state[0][0]:
-
-                    #     snapshot = np.append(snapshot, snap, axis=0)
-
-                    # snapshot *= 128
-
-                    # snapshot += 128
-
-                    # cv2.imshow('%s' % timestep, np.uint8(snapshot))
-
-                    # cv2.waitKey(0)
 
                     action, policy = agent.get_action(state)
 
@@ -528,7 +516,11 @@ if __name__ == '__main__':
 
                     except:
 
+
+
                         bug = True
+
+                        print(f'bug = {bug}')
 
                         break
 
@@ -543,9 +535,6 @@ if __name__ == '__main__':
                     pmax += float(np.amax(policy))
 
                     score += reward
-
-                    if info['Y'] > bestY:
-                        bestY = info['Y']
 
                     print('%s' % (Action_Space[action]), end='\r', flush=True)
 
@@ -562,9 +551,9 @@ if __name__ == '__main__':
 
                 # done
 
-                print('Ep %d: BestY %.3f Step %d Score %.2f Pmax %.2f'
+                print('Ep %d:  Step %d Score %.2f Pmax %.2f'
 
-                      % (episode, bestY, timestep, score, pmax))
+                      % (episode, timestep, score, pmax))
 
                 episode += 1
 
@@ -578,7 +567,7 @@ if __name__ == '__main__':
 
         # Train
 
-        time_limit = 600
+        time_limit = 10
 
         if os.path.exists('save_stat/' + agent_name + '_stat.csv'):
             with open('save_stat/' + agent_name + '_stat.csv', 'r') as f:
@@ -589,14 +578,6 @@ if __name__ == '__main__':
                 print('Last episode:', episode)
 
                 episode += 1
-
-        if os.path.exists('save_stat/' + agent_name + '_highscore.csv'):
-            with open('save_stat/' + agent_name + '_highscore.csv', 'r') as f:
-                read = csv.reader(f)
-
-                highscoreY = float(next(reversed(list(read)))[0])
-
-                print('Best Y:', highscoreY)
 
         global_step = 0
 
@@ -618,13 +599,15 @@ if __name__ == '__main__':
 
                 image, vel = observe
 
-                try:
+                image = transform_input(image, args.img_height, args.img_width)
 
-                    image = transform_input(image, args.img_height, args.img_width)
-
-                except:
-
-                    continue
+                # try:
+                #
+                #     image = transform_input(image, args.img_height, args.img_width)
+                #
+                # except:
+                #
+                #     continue
 
                 history = np.stack([image] * args.seqsize, axis=1)
 
@@ -653,18 +636,24 @@ if __name__ == '__main__':
 
                     image, vel = observe
 
-                    try:
+                    # if timestep < 3:
+                    #
+                    #     raise Exception
 
-                        if timestep < 3 :
-                            raise Exception
-
-                        image = transform_input(image, args.img_height, args.img_width)
-
-                    except:
-
-                        bug = True
-
-                        break
+                    image = transform_input(image, args.img_height, args.img_width)
+                    #
+                    # try:
+                    #
+                    #     if timestep < 3 :
+                    #         raise Exception
+                    #
+                    #     image = transform_input(image, args.img_height, args.img_width)
+                    #
+                    # except:
+                    #
+                    #     bug = True
+                    #
+                    #     break
 
                     history = np.append(history[:, 1:], [image], axis=1)
 
