@@ -219,8 +219,6 @@ class A2CAgent(object):
 
         policy = np.array(policy)
 
-        print(policy)
-
         action = np.random.choice(self.action_size, 1, p=policy)[0]
 
         return action, policy

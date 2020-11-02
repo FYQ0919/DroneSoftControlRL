@@ -3,10 +3,11 @@ import numpy as np
 import airsim
 
 #define destination
-object_pos = [10,2,2]
+object_pos = [13,0,1]
 #define boundary
 outZ = [-5, 5]
 outY = [-5,5]
+outX = [-5,15]
 Action_Space = ['00', '+x', '+y', '+z', '-x', '-y', '-z']
 
 np.random.seed(10)
@@ -18,7 +19,7 @@ class windENV():
         self.cl = airsim.MultirotorClient()
         self.cl.confirmConnection()
         self.action_size = 3
-        self.duration = 0.25
+        self.duration = 0.2
 
 
     def reset(self):
@@ -64,7 +65,7 @@ class windENV():
         angle_acc = self.cl.getMultirotorState().kinematics_estimated.angular_acceleration
 
         #define stop condition
-        stop = pos.y_val < outY[0] or pos.y_val > outY[1] or pos.z_val < outZ[0] or pos.z_val > outZ[1]
+        stop = pos.y_val < outY[0] or pos.y_val > outY[1] or pos.z_val < outZ[0] or pos.z_val > outZ[1] or pos.x_val < outX[0] or pos.x_val > outX[1]
         pos = np.array([pos.x_val,pos.y_val,pos.z_val],dtype=np.float)
         print(f'position is {pos}')
         new_bias = pos - object_pos
@@ -77,7 +78,7 @@ class windENV():
 
 
         #compute reward
-        reward = self.compute_reward(velocity,angle_acc,stop,bias,object_pos,new_bias)
+        reward = self.compute_reward(velocity,angle_acc,stop,bias,object_pos,new_bias,success)
 
 
 
@@ -87,7 +88,7 @@ class windENV():
         bias = new_bias
         return  observation, reward, done ,bias
 
-    def compute_reward(self, velocity, angle_acc,stop,bias,object_pos,new_bias):
+    def compute_reward(self, velocity, angle_acc,stop,bias,object_pos,new_bias,success):
 
         velocity = np.array([velocity.x_val,velocity.y_val,velocity.z_val],dtype=np.float)
         speed = np.linalg.norm(velocity)
@@ -98,9 +99,11 @@ class windENV():
         weight_ar = 1.0
         weight_dis = 1.0
         weight_vr = 0.1
-        step_cost = -0.1
+
         if stop:
-            reward = -10
+            reward = -5
+        elif success:
+            reward = 2
         else:
             #define diiferent reward:
 
@@ -110,20 +113,20 @@ class windENV():
             if distance < standard_dis and new_distance < distance:
                 distance_reward = 1.
             else:
-                distance_reward = -1.
+                distance_reward = -1.5
             print(f'distance reward is {distance_reward}')
 
             angle_acc_reward = 1./(np.linalg.norm(angle_acc)+1)
             print(f'angle_acc_reward = {angle_acc_reward}')
 
-            reward = weight_ar*angle_acc_reward + weight_vr*speed_reward + weight_dis*distance_reward + step_cost
+            reward = weight_ar*angle_acc_reward + weight_vr*speed_reward + weight_dis*distance_reward
         print(f'reward = {reward}')
         return reward
 
     def add_wind(self):
         w1 = np.random.randint(0,3)
         w2 = np.random.randint(0,3)
-        w3 = np.random.randint(2,3)
+        w3 = np.random.randint(0,3)
         wind = airsim.Vector3r(w1,w2,w3)
         print(f'add wind vector = {wind}')
         self.cl.simSetWind(wind)
