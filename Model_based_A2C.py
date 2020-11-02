@@ -1,8 +1,8 @@
-#Author: Fu Yangqing
-#NUS ID: A0225413R
-#Description:
-#Use A2C algorithm to train quadrotor to do soft motion
-#Update time:2020/10/30
+# Author: Fu Yangqing
+# NUS ID: A0225413R
+# Description:
+# Use A2C algorithm to train quadrotor to do soft motion
+# Update time:2020/10/30
 
 
 import time
@@ -15,7 +15,6 @@ import cv2
 import keras
 from datetime import datetime as dt
 
-
 from keras.layers import Conv2D, MaxPooling2D, Dense, GRU, Input, ELU
 
 from keras.optimizers import Adam
@@ -26,7 +25,7 @@ from PIL import Image
 
 import os
 
-from Wind_env import windENV,Action_Space
+from Model_Based_ENV import windENV, Action_Space
 
 agent_name = 'a2c'
 
@@ -43,8 +42,6 @@ class A2CAgent(object):
 
         self.acc_size = 3
 
-
-
         self.actor_lr = actor_lr
 
         self.critic_lr = critic_lr
@@ -58,6 +55,8 @@ class A2CAgent(object):
         self.horizon = horizon
 
         self.sess = tf.Session()
+
+        self.writer = tf.summary.FileWriter('./tensorflow/',self.sess.graph)
 
         keras.backend.set_session(self.sess)
 
@@ -91,17 +90,20 @@ class A2CAgent(object):
 
         image_process = keras.layers.TimeDistributed(MaxPooling2D((2, 2)))(image_process)
 
-        image_process = keras.layers.TimeDistributed(Conv2D(32, (5, 5), activation='elu', kernel_initializer='he_normal'))(
+        image_process = keras.layers.TimeDistributed(
+            Conv2D(32, (5, 5), activation='elu', kernel_initializer='he_normal'))(
             image_process)
 
         image_process = keras.layers.TimeDistributed(MaxPooling2D((2, 2)))(image_process)
 
-        image_process = keras.layers.TimeDistributed(Conv2D(16, (3, 3), activation='elu', kernel_initializer='he_normal'))(
+        image_process = keras.layers.TimeDistributed(
+            Conv2D(16, (3, 3), activation='elu', kernel_initializer='he_normal'))(
             image_process)
 
         image_process = keras.layers.TimeDistributed(MaxPooling2D((2, 2)))(image_process)
 
-        image_process = keras.layers.TimeDistributed(Conv2D(8, (1, 1), activation='elu', kernel_initializer='he_normal'))(
+        image_process = keras.layers.TimeDistributed(
+            Conv2D(8, (1, 1), activation='elu', kernel_initializer='he_normal'))(
             image_process)
 
         image_process = keras.layers.TimeDistributed(keras.layers.Flatten())(image_process)
@@ -181,7 +183,7 @@ class A2CAgent(object):
 
         train = keras.backend.function([self.actor.input[0], self.actor.input[1], action, advantages],
 
-                           [loss], updates=updates)
+                                       [loss], updates=updates)
 
         return train
 
@@ -190,7 +192,6 @@ class A2CAgent(object):
         y = keras.backend.placeholder(shape=(None, 1))
 
         value = self.critic.output
-
 
         # # Huber loss
 
@@ -208,7 +209,7 @@ class A2CAgent(object):
 
         train = keras.backend.function([self.critic.input[0], self.critic.input[1], y],
 
-                           [loss], updates=updates)
+                                       [loss], updates=updates)
 
         return train
 
@@ -229,7 +230,6 @@ class A2CAgent(object):
         accs = np.zeros([len(self.states) + 1, self.acc_size], dtype=np.float32)
 
         for i in range(len(self.states)):
-
             images[i], accs[i] = self.states[i]
 
         images[-1], accs[-1] = next_state
@@ -266,7 +266,11 @@ class A2CAgent(object):
 
         critic_loss = self.critic_update(states + [target_val])
 
+
+
         self.clear_sample()
+
+
 
         return actor_loss[0], critic_loss[0]
 
@@ -341,60 +345,41 @@ def transform_input(responses, img_height, img_width):
 
 
 def interpret_action(action):
-    scaling_factor = 0.5
-
-    basic_speed = 1.5
+    scaling_factor = 1.
 
     if action == 0:
 
-        RotorSpeed = (basic_speed,basic_speed,basic_speed,basic_speed)
+        quad_offset = (0, 0, 0)
 
     elif action == 1:
 
-        RotorSpeed = (basic_speed-scaling_factor, basic_speed-scaling_factor,basic_speed+scaling_factor,basic_speed+scaling_factor)
+        quad_offset = (scaling_factor, 0, 0)
 
     elif action == 2:
 
-        RotorSpeed = (basic_speed+scaling_factor, basic_speed+scaling_factor,basic_speed-scaling_factor, basic_speed-scaling_factor)
+        quad_offset = (0, scaling_factor, 0)
 
     elif action == 3:
 
-        RotorSpeed = (basic_speed+scaling_factor,basic_speed-scaling_factor,basic_speed+scaling_factor,basic_speed-scaling_factor)
+        quad_offset = (0, 0, scaling_factor)
 
     elif action == 4:
 
-        RotorSpeed = (basic_speed+scaling_factor, basic_speed-scaling_factor, basic_speed-scaling_factor,basic_speed+scaling_factor)
+        quad_offset = (-scaling_factor, 0, 0)
 
     elif action == 5:
 
-        RotorSpeed = (basic_speed+scaling_factor*0.5, basic_speed+scaling_factor*0.5, basic_speed+scaling_factor+scaling_factor*0.5,basic_speed+scaling_factor*0.5)
+        quad_offset = (0, -scaling_factor, 0)
 
     elif action == 6:
 
-        RotorSpeed = (basic_speed-scaling_factor, basic_speed-scaling_factor, basic_speed-scaling_factor,basic_speed-scaling_factor)
-    
-    elif action == 7:
+        quad_offset = (0, 0, -scaling_factor)
 
-        RotorSpeed = (basic_speed - scaling_factor, basic_speed - scaling_factor, basic_speed - scaling_factor,
-                      basic_speed + scaling_factor)
-    elif action == 8:
-
-        RotorSpeed = (basic_speed - scaling_factor, basic_speed + scaling_factor, basic_speed - scaling_factor,
-                  basic_speed - scaling_factor)
-    elif action == 9:
-
-        RotorSpeed = (basic_speed - scaling_factor, basic_speed + scaling_factor, basic_speed + scaling_factor,
-                  basic_speed + scaling_factor)
-    elif action == 10:
-
-        RotorSpeed = (basic_speed + scaling_factor, basic_speed - scaling_factor, basic_speed + scaling_factor,
-                  basic_speed + scaling_factor)
-
-
-    return RotorSpeed
+    return quad_offset
 
 
 if __name__ == '__main__':
+
 
 
     parser = argparse.ArgumentParser()
@@ -412,7 +397,6 @@ if __name__ == '__main__':
     parser.add_argument('--actor_lr', type=float, default=5e-5)
 
     parser.add_argument('--critic_lr', type=float, default=1e-4)
-
 
     parser.add_argument('--gamma', type=float, default=0.99)
 
@@ -441,7 +425,9 @@ if __name__ == '__main__':
 
     state_size = [args.seqsize, args.img_height, args.img_width, 1]
 
-    action_size = 10
+    action_size = 7
+
+
 
     agent = A2CAgent(
 
@@ -461,7 +447,7 @@ if __name__ == '__main__':
 
         horizon=args.horizon,
 
-        load_model=args.load_model
+        load_model=args.load_model,
 
     )
 
@@ -469,7 +455,9 @@ if __name__ == '__main__':
 
     episode = 0
 
-    highscoreY = 0.
+    object_pos = [30, 2, 2]
+
+    bias = np.linalg.norm(object_pos)
 
     if os.path.exists('save_stat/' + agent_name + '_stat.csv'):
         with open('save_stat/' + agent_name + '_stat.csv', 'r') as f:
@@ -497,7 +485,7 @@ if __name__ == '__main__':
 
                 # stats
 
-                timestep, score, pmax =  0, 0., 0.
+                timestep, score, pmax = 0, 0., 0.
 
                 observe = env.reset()
 
@@ -525,7 +513,7 @@ if __name__ == '__main__':
 
                     real_action = interpret_action(action)
 
-                    observe, reward, done, info = env.step(real_action)
+                    observe, reward, done, bias = env.step(real_action,bias)
 
                     image, acc = observe
 
@@ -534,8 +522,6 @@ if __name__ == '__main__':
                         image = transform_input(image, args.img_height, args.img_width)
 
                     except:
-
-
 
                         bug = True
 
@@ -559,7 +545,7 @@ if __name__ == '__main__':
 
                     if args.verbose:
                         print(
-                            'Step %d Action %s Reward %.2f Info %s:' % (timestep, real_action, reward, info['status']))
+                            'Step %d Action %s Reward %.2f Bias %.2f:' % (timestep, real_action, reward,bias))
 
                     state = next_state
 
@@ -586,7 +572,7 @@ if __name__ == '__main__':
 
         # Train
 
-        time_limit = 10
+        time_limit = 100
 
         if os.path.exists('save_stat/' + agent_name + '_stat.csv'):
             with open('save_stat/' + agent_name + '_stat.csv', 'r') as f:
@@ -653,7 +639,7 @@ if __name__ == '__main__':
 
                     print(f'real action is {real_action}')
 
-                    observe, reward, done = env.step(real_action)
+                    observe, reward, done, bias = env.step(real_action,bias)
 
                     image, acc = observe
 
@@ -744,11 +730,13 @@ if __name__ == '__main__':
                         wr = csv.writer(f)
 
                         wr.writerow('%.4f' % s if type(s) is float else s for s in
-                                    [highscoreY, episode, score, dt.now().strftime('%Y-%m-%d %H:%M:%S')])
+                                    [highscore, episode, score, dt.now().strftime('%Y-%m-%d %H:%M:%S')])
 
                     agent.save_model('./save_model/' + agent_name + '_best')
 
                 agent.save_model('./save_model/' + agent_name)
+
+
 
                 episode += 1
 

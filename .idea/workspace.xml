@@ -41,9 +41,31 @@
     <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
     <property name="WebServerToolWindowFactoryState" value="false" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
     <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
   </component>
-  <component name="RunManager" selected="Python.a2c">
+  <component name="RunManager" selected="Python.Model_based_A2C">
+    <configuration name="Model_based_A2C" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="RL_Part2" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/Model_based_A2C.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
     <configuration name="a2c" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="RL_Part2" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -90,12 +112,13 @@
     </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Python.Model_based_A2C" />
         <item itemvalue="Python.a2c" />
         <item itemvalue="Python.pos" />
       </list>
     </recent_temporary>
   </component>
-  <component name="SpellCheckerSettings" BundledDictionaries="0" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" Dictionaries="0" CorrectionsLimit="5" DefaultDictionary="application-level" UseSingleDictionary="true" />
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="SvnConfiguration">
     <configuration />
   </component>
@@ -135,48 +158,50 @@
     <option name="oldMeFiltersMigrated" value="true" />
   </component>
   <component name="WindowStateProjectService">
-    <state x="421" y="135" key="FileChooserDialogImpl" timestamp="1604235438128">
-      <screen x="0" y="0" width="1280" height="760" />
+    <state x="632" y="185" key="FileChooserDialogImpl" timestamp="1604285753860">
+      <screen x="0" y="0" width="1920" height="1040" />
     </state>
     <state x="421" y="135" key="FileChooserDialogImpl/0.0.1280.760/2560.0.2560.1400@0.0.1280.760" timestamp="1604235438128" />
     <state x="421" y="135" key="FileChooserDialogImpl/0.0.1280.760@0.0.1280.760" timestamp="1604038208470" />
-    <state width="1238" height="399" key="GridCell.Tab.0.bottom" timestamp="1604252672192">
-      <screen x="0" y="0" width="1280" height="760" />
+    <state x="632" y="185" key="FileChooserDialogImpl/0.0.1920.1040@0.0.1920.1040" timestamp="1604285753860" />
+    <state width="1899" height="282" key="GridCell.Tab.0.bottom" timestamp="1604301529024">
+      <screen x="0" y="0" width="1920" height="1040" />
     </state>
     <state width="1238" height="399" key="GridCell.Tab.0.bottom/0.0.1280.760/2560.0.2560.1400@0.0.1280.760" timestamp="1604252672192" />
     <state width="2517" height="399" key="GridCell.Tab.0.bottom/0.0.1280.760/2560.0.2560.1400@2560.0.2560.1400" timestamp="1604247986400" />
     <state width="1238" height="190" key="GridCell.Tab.0.bottom/0.0.1280.760@0.0.1280.760" timestamp="1604061013799" />
-    <state width="1238" height="399" key="GridCell.Tab.0.center" timestamp="1604252672192">
-      <screen x="0" y="0" width="1280" height="760" />
+    <state width="1899" height="282" key="GridCell.Tab.0.bottom/0.0.1920.1040@0.0.1920.1040" timestamp="1604301529024" />
+    <state width="1899" height="282" key="GridCell.Tab.0.center" timestamp="1604301529024">
+      <screen x="0" y="0" width="1920" height="1040" />
     </state>
     <state width="1238" height="399" key="GridCell.Tab.0.center/0.0.1280.760/2560.0.2560.1400@0.0.1280.760" timestamp="1604252672192" />
     <state width="2517" height="399" key="GridCell.Tab.0.center/0.0.1280.760/2560.0.2560.1400@2560.0.2560.1400" timestamp="1604247986400" />
     <state width="1238" height="190" key="GridCell.Tab.0.center/0.0.1280.760@0.0.1280.760" timestamp="1604061013799" />
-    <state width="1238" height="399" key="GridCell.Tab.0.left" timestamp="1604252672192">
-      <screen x="0" y="0" width="1280" height="760" />
+    <state width="1899" height="282" key="GridCell.Tab.0.center/0.0.1920.1040@0.0.1920.1040" timestamp="1604301529024" />
+    <state width="1899" height="282" key="GridCell.Tab.0.left" timestamp="1604301529024">
+      <screen x="0" y="0" width="1920" height="1040" />
     </state>
     <state width="1238" height="399" key="GridCell.Tab.0.left/0.0.1280.760/2560.0.2560.1400@0.0.1280.760" timestamp="1604252672192" />
     <state width="2517" height="399" key="GridCell.Tab.0.left/0.0.1280.760/2560.0.2560.1400@2560.0.2560.1400" timestamp="1604247986400" />
     <state width="1238" height="190" key="GridCell.Tab.0.left/0.0.1280.760@0.0.1280.760" timestamp="1604061013798" />
-    <state width="1238" height="399" key="GridCell.Tab.0.right" timestamp="1604252672192">
-      <screen x="0" y="0" width="1280" height="760" />
+    <state width="1899" height="282" key="GridCell.Tab.0.left/0.0.1920.1040@0.0.1920.1040" timestamp="1604301529024" />
+    <state width="1899" height="282" key="GridCell.Tab.0.right" timestamp="1604301529024">
+      <screen x="0" y="0" width="1920" height="1040" />
     </state>
     <state width="1238" height="399" key="GridCell.Tab.0.right/0.0.1280.760/2560.0.2560.1400@0.0.1280.760" timestamp="1604252672192" />
     <state width="2517" height="399" key="GridCell.Tab.0.right/0.0.1280.760/2560.0.2560.1400@2560.0.2560.1400" timestamp="1604247986400" />
     <state width="1238" height="190" key="GridCell.Tab.0.right/0.0.1280.760@0.0.1280.760" timestamp="1604061013799" />
-    <state x="3132" y="92" key="SettingsEditor" timestamp="1604242053766">
-      <screen x="2560" y="0" width="2560" height="1400" />
+    <state width="1899" height="282" key="GridCell.Tab.0.right/0.0.1920.1040@0.0.1920.1040" timestamp="1604301529024" />
+    <state x="461" y="165" key="SettingsEditor" timestamp="1604285768348">
+      <screen x="0" y="0" width="1920" height="1040" />
     </state>
     <state x="286" y="50" key="SettingsEditor/0.0.1280.760/2560.0.2560.1400@0.0.1280.760" timestamp="1604237345303" />
     <state x="3132" y="92" key="SettingsEditor/0.0.1280.760/2560.0.2560.1400@2560.0.2560.1400" timestamp="1604242053766" />
     <state x="286" y="50" key="SettingsEditor/0.0.1280.760@0.0.1280.760" timestamp="1604046727018" />
-    <state x="461" y="165" key="SettingsEditor/0.0.1920.1040@0.0.1920.1040" timestamp="1604025790886" />
+    <state x="461" y="165" key="SettingsEditor/0.0.1920.1040@0.0.1920.1040" timestamp="1604285768348" />
     <state x="3503" y="315" width="672" height="678" key="search.everywhere.popup" timestamp="1604241538811">
       <screen x="2560" y="0" width="2560" height="1400" />
     </state>
     <state x="3503" y="315" width="672" height="678" key="search.everywhere.popup/0.0.1280.760/2560.0.2560.1400@2560.0.2560.1400" timestamp="1604241538811" />
-  </component>
-  <component name="com.intellij.coverage.CoverageDataManagerImpl">
-    <SUITE FILE_PATH="coverage/Wind_env_py$a2c.coverage" NAME="a2c Coverage Results" MODIFIED="1604247986382" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
 </project>
