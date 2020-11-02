@@ -25,7 +25,7 @@ from PIL import Image
 
 import os
 
-from Model_Based_ENV import windENV, Action_Space
+from Model_Based_ENV import windENV, Action_Space, object_pos
 
 agent_name = 'a2c'
 
@@ -86,7 +86,7 @@ class A2CAgent(object):
         image_process = keras.layers.BatchNormalization()(image)
 
         image_process = keras.layers.TimeDistributed(
-            Conv2D(32, (8, 8), activation='elu', padding='same', kernel_initializer='he_normal'))(image_process)
+            Conv2D(32, (8, 8), activation='elu', padding='valid', kernel_initializer='he_normal'))(image_process)
 
         image_process = keras.layers.TimeDistributed(MaxPooling2D((2, 2)))(image_process)
 
@@ -135,7 +135,7 @@ class A2CAgent(object):
         policy = keras.layers.BatchNormalization()(policy)
 
         policy = Dense(self.action_size, activation='softmax',
-                       kernel_initializer=tf.random_uniform_initializer(minval=-2e-3, maxval=2e-3))(policy)
+                       kernel_initializer=tf.random_uniform_initializer(minval=-3e-3, maxval=3e-3))(policy)
 
         actor = Model(inputs=[image, acc], outputs=policy)
 
@@ -218,6 +218,8 @@ class A2CAgent(object):
         policy = self.actor.predict(state)[0]
 
         policy = np.array(policy)
+
+        print(policy)
 
         action = np.random.choice(self.action_size, 1, p=policy)[0]
 
@@ -325,6 +327,7 @@ Environment interaction
 
 
 def transform_input(responses, img_height, img_width):
+
     img1d = np.array(responses[0].image_data_float, dtype=np.float)
 
     img1d = np.array(np.clip(255 * 3 * img1d, 0, 255), dtype=np.uint8)
@@ -335,8 +338,6 @@ def transform_input(responses, img_height, img_width):
 
     image = np.array(image.resize((img_width, img_height)).convert('L'))
 
-    cv2.imwrite('view.png', image)
-
     image = np.float32(image.reshape(1, img_height, img_width, 1))
 
     image /= 255.0
@@ -345,7 +346,10 @@ def transform_input(responses, img_height, img_width):
 
 
 def interpret_action(action):
+
     scaling_factor = 1.
+
+    forward_factor = 0.5
 
     if action == 0:
 
@@ -353,27 +357,27 @@ def interpret_action(action):
 
     elif action == 1:
 
-        quad_offset = (scaling_factor, 0, 0)
+        quad_offset = (scaling_factor+forward_factor, 0, 0)
 
     elif action == 2:
 
-        quad_offset = (0, scaling_factor, 0)
+        quad_offset = (forward_factor, scaling_factor, 0)
 
     elif action == 3:
 
-        quad_offset = (0, 0, scaling_factor)
+        quad_offset = (forward_factor, 0, scaling_factor)
 
     elif action == 4:
 
-        quad_offset = (-scaling_factor, 0, 0)
+        quad_offset = (-scaling_factor+forward_factor, 0, 0)
 
     elif action == 5:
 
-        quad_offset = (0, -scaling_factor, 0)
+        quad_offset = (forward_factor, -scaling_factor, 0)
 
     elif action == 6:
 
-        quad_offset = (0, 0, -scaling_factor)
+        quad_offset = (forward_factor, 0, -scaling_factor)
 
     return quad_offset
 
@@ -394,13 +398,13 @@ if __name__ == '__main__':
 
     parser.add_argument('--img_width', type=int, default=128)
 
-    parser.add_argument('--actor_lr', type=float, default=5e-5)
+    parser.add_argument('--actor_lr', type=float, default=5e-4)
 
-    parser.add_argument('--critic_lr', type=float, default=1e-4)
+    parser.add_argument('--critic_lr', type=float, default=5e-4)
 
     parser.add_argument('--gamma', type=float, default=0.99)
 
-    parser.add_argument('--lambd', type=float, default=0.90)
+    parser.add_argument('--lambd', type=float, default=0.96)
 
     parser.add_argument('--entropy', type=float, default=1e-3)
 
@@ -411,9 +415,6 @@ if __name__ == '__main__':
     parser.add_argument('--target_rate', type=int, default=1000)
 
     args = parser.parse_args()
-
-    if not os.path.exists('save_graph/' + agent_name):
-        os.makedirs('save_graph/' + agent_name)
 
     if not os.path.exists('save_stat'):
         os.makedirs('save_stat')
@@ -455,7 +456,7 @@ if __name__ == '__main__':
 
     episode = 0
 
-    object_pos = [30, 2, 2]
+
 
     bias = np.linalg.norm(object_pos)
 
@@ -572,7 +573,7 @@ if __name__ == '__main__':
 
         # Train
 
-        time_limit = 100
+        time_limit = 300
 
         if os.path.exists('save_stat/' + agent_name + '_stat.csv'):
             with open('save_stat/' + agent_name + '_stat.csv', 'r') as f:
@@ -629,6 +630,7 @@ if __name__ == '__main__':
                     global_step += 1
 
                     if global_step >= args.target_rate:
+
                         agent.update_target_model()
 
                         global_step = 0

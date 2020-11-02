@@ -3,10 +3,10 @@ import numpy as np
 import airsim
 
 #define destination
-object_pos = [30,2,2]
+object_pos = [10,2,2]
 #define boundary
 outZ = [-5, 5]
-outY = [-10,10]
+outY = [-5,5]
 Action_Space = ['00', '+x', '+y', '+z', '-x', '-y', '-z']
 
 np.random.seed(10)
@@ -68,7 +68,7 @@ class windENV():
         pos = np.array([pos.x_val,pos.y_val,pos.z_val],dtype=np.float)
         print(f'position is {pos}')
         new_bias = pos - object_pos
-        success = np.linalg.norm(bias) < 10
+        success = np.linalg.norm(bias) < 1
         done = stop or success
         if stop:
             print('state = stop')
