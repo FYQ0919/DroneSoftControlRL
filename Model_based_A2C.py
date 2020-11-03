@@ -14,7 +14,7 @@ import csv
 import cv2
 import keras
 from datetime import datetime as dt
-
+import matplotlib.pyplot as plt
 from keras.layers import Conv2D, MaxPooling2D, Dense, GRU, Input, ELU
 
 from keras.optimizers import Adam
@@ -54,11 +54,9 @@ class A2CAgent(object):
 
         self.horizon = horizon
 
-        self.sess = tf.Session()
-
-        self.writer = tf.summary.FileWriter('./tensorflow/',self.sess.graph)
-
-        keras.backend.set_session(self.sess)
+        # self.sess = tf.Session()
+        #
+        # keras.backend.set_session(self.sess)
 
         self.actor, self.critic = self.build_model()
 
@@ -68,7 +66,7 @@ class A2CAgent(object):
 
         self.critic_update = self.build_critic_optimizer()
 
-        self.sess.run(tf.global_variables_initializer())
+        # self.sess.run(tf.global_variables_initializer())
 
         if load_model:
             self.load_model('./save_model/' + agent_name)
@@ -266,11 +264,7 @@ class A2CAgent(object):
 
         critic_loss = self.critic_update(states + [target_val])
 
-
-
         self.clear_sample()
-
-
 
         return actor_loss[0], critic_loss[0]
 
@@ -325,7 +319,6 @@ Environment interaction
 
 
 def transform_input(responses, img_height, img_width):
-
     img1d = np.array(responses[0].image_data_float, dtype=np.float)
 
     img1d = np.array(np.clip(255 * 3 * img1d, 0, 255), dtype=np.uint8)
@@ -344,7 +337,6 @@ def transform_input(responses, img_height, img_width):
 
 
 def interpret_action(action):
-
     scaling_factor = 1.
 
     forward_factor = 0.5
@@ -355,7 +347,7 @@ def interpret_action(action):
 
     elif action == 1:
 
-        quad_offset = (scaling_factor+forward_factor, 0, 0)
+        quad_offset = (scaling_factor + forward_factor, 0, 0)
 
     elif action == 2:
 
@@ -367,7 +359,7 @@ def interpret_action(action):
 
     elif action == 4:
 
-        quad_offset = (-scaling_factor+forward_factor, 0, 0)
+        quad_offset = (-scaling_factor + forward_factor, 0, 0)
 
     elif action == 5:
 
@@ -381,8 +373,6 @@ def interpret_action(action):
 
 
 if __name__ == '__main__':
-
-
 
     parser = argparse.ArgumentParser()
 
@@ -426,8 +416,6 @@ if __name__ == '__main__':
 
     action_size = 7
 
-
-
     agent = A2CAgent(
 
         state_size=state_size,
@@ -453,8 +441,6 @@ if __name__ == '__main__':
     # Train
 
     episode = 0
-
-
 
     bias = np.linalg.norm(object_pos)
 
@@ -512,7 +498,7 @@ if __name__ == '__main__':
 
                     real_action = interpret_action(action)
 
-                    observe, reward, done, bias = env.step(real_action,bias)
+                    observe, reward, done, bias = env.step(real_action, bias)
 
                     image, acc = observe
 
@@ -544,7 +530,7 @@ if __name__ == '__main__':
 
                     if args.verbose:
                         print(
-                            'Step %d Action %s Reward %.2f Bias %.2f:' % (timestep, real_action, reward,bias))
+                            'Step %d Action %s Reward %.2f Bias %.2f:' % (timestep, real_action, reward, bias))
 
                     state = next_state
 
@@ -599,6 +585,8 @@ if __name__ == '__main__':
 
                 t, actor_loss, critic_loss = 0, 0., 0.
 
+                score_list=[]
+
                 observe = env.reset()
 
                 image, acc = observe
@@ -628,7 +616,6 @@ if __name__ == '__main__':
                     global_step += 1
 
                     if global_step >= args.target_rate:
-
                         agent.update_target_model()
 
                         global_step = 0
@@ -639,28 +626,11 @@ if __name__ == '__main__':
 
                     print(f'real action is {real_action}')
 
-                    observe, reward, done, bias = env.step(real_action,bias)
+                    observe, reward, done, bias = env.step(real_action, bias)
 
                     image, acc = observe
 
-                    # if timestep < 3:
-                    #
-                    #     raise Exception
-
                     image = transform_input(image, args.img_height, args.img_width)
-                    #
-                    # try:
-                    #
-                    #     if timestep < 3 :
-                    #         raise Exception
-                    #
-                    #     image = transform_input(image, args.img_height, args.img_width)
-                    #
-                    # except:
-                    #
-                    #     bug = True
-                    #
-                    #     break
 
                     history = np.append(history[:, 1:], [image], axis=1)
 
@@ -673,6 +643,8 @@ if __name__ == '__main__':
                     # stats
 
                     score += reward
+
+                    score_list.append(score)
 
                     pmax += float(np.amax(policy))
 
@@ -736,9 +708,34 @@ if __name__ == '__main__':
 
                 agent.save_model('./save_model/' + agent_name)
 
-
-
                 episode += 1
+
+                # tf.summary.scalar("score", score, step=episode)
+                #
+                # tf.summary.scalar("reward", reward, step=global_step)
+                #
+                # tf.summary.scalar("actor_loss", actor_loss, step=episode)
+                #
+                # tf.summary.scalar("critic_loss", critic_loss, step=episode)
+                #
+                # tf.summary.scalar("c_loss", c_loss, step=global_step)
+                #
+                # tf.summary.scalar("a_loss", a_loss, step=global_step)
+                #
+                # tf.summary.scalar("policy", pmax, step=episode)
+
+
+                if episode%10 == 1:
+
+                    fig = plt.figure()
+
+                    ax = fig.add_subplot(1, 1, 1)
+
+                    ax.scatter(score_list, range(episode))
+
+                    plt.ion()
+
+                    plt.show()
 
             except KeyboardInterrupt:
 
