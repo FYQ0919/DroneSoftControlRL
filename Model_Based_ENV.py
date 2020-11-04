@@ -5,7 +5,7 @@ import airsim
 #define destination
 object_pos = [13,0,1]
 #define boundary
-outZ = [-5, 5]
+outZ = [-5, 2]
 outY = [-5,5]
 outX = [-5,15]
 Action_Space = ['00', '+x', '+y', '+z', '-x', '-y', '-z']
@@ -101,9 +101,9 @@ class windENV():
         weight_vr = 0.1
 
         if stop:
-            reward = -5
+            reward = -50
         elif success:
-            reward = 2
+            reward = 200
         else:
             #define diiferent reward:
 

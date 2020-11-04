@@ -11,10 +11,11 @@ import argparse
 import numpy as np
 import tensorflow as tf
 import csv
+
 import cv2
+
 import keras
-from datetime import datetime as dt
-import matplotlib.pyplot as plt
+
 from keras.layers import Conv2D, MaxPooling2D, Dense, GRU, Input, ELU
 
 from keras.optimizers import Adam
@@ -54,24 +55,18 @@ class A2CAgent(object):
 
         self.horizon = horizon
 
-        # self.sess = tf.Session()
-        #
-        # keras.backend.set_session(self.sess)
-
         self.actor, self.critic = self.build_model()
 
-        _, self.target_critic = self.build_model()
+        _, self.critic2 = self.build_model()
 
         self.actor_update = self.build_actor_optimizer()
 
         self.critic_update = self.build_critic_optimizer()
 
-        # self.sess.run(tf.global_variables_initializer())
-
         if load_model:
             self.load_model('./save_model/' + agent_name)
 
-        self.target_critic.set_weights(self.critic.get_weights())
+        self.critic2.set_weights(self.critic.get_weights())
 
         self.states, self.actions, self.rewards = [], [], []
 
@@ -234,7 +229,7 @@ class A2CAgent(object):
 
         states = [images, accs]
 
-        values = self.target_critic.predict(states)
+        values = self.critic2.predict(states)
 
         values = np.reshape(values, len(values))
 
@@ -246,6 +241,7 @@ class A2CAgent(object):
             values[-1] = np.float32([0])
 
         for t in reversed(range(len(self.rewards))):
+
             delta = self.rewards[t] + self.gamma * values[t + 1] - values[t]
 
             gae = delta + self.gamma * self.lambd * gae
@@ -290,7 +286,7 @@ class A2CAgent(object):
 
     def update_target_model(self):
 
-        self.target_critic.set_weights(self.critic.get_weights())
+        self.critic2.set_weights(self.critic.get_weights())
 
     def load_model(self, name):
 
@@ -339,7 +335,7 @@ def transform_input(responses, img_height, img_width):
 def interpret_action(action):
     scaling_factor = 1.
 
-    forward_factor = 0.5
+    forward_factor = 0.2
 
     if action == 0:
 
@@ -581,25 +577,15 @@ if __name__ == '__main__':
 
                 # stats
 
-                bestS, timestep, score, pmax = 0., 0, 0., 0.
+                bestS, timestep, score, pmax, acc_score = 0., 0, 0., 0., 0.
 
                 t, actor_loss, critic_loss = 0, 0., 0.
-
-                score_list=[]
 
                 observe = env.reset()
 
                 image, acc = observe
 
                 image = transform_input(image, args.img_height, args.img_width)
-
-                # try:
-                #
-                #     image = transform_input(image, args.img_height, args.img_width)
-                #
-                # except:
-                #
-                #     continue
 
                 history = np.stack([image] * args.seqsize, axis=1)
 
@@ -636,6 +622,8 @@ if __name__ == '__main__':
 
                     acc = acc.reshape(1, -1)
 
+                    acc_s = np.linalg.norm(acc)
+
                     next_state = [history, acc]
 
                     agent.append_sample(state, action, reward)
@@ -644,7 +632,7 @@ if __name__ == '__main__':
 
                     score += reward
 
-                    score_list.append(score)
+                    acc_score += acc_s
 
                     pmax += float(np.amax(policy))
 
@@ -670,18 +658,14 @@ if __name__ == '__main__':
 
                 critic_loss /= (timestep // args.horizon + 1)
 
+                acc_score /= (timestep // args.horizon + 1)
+
                 if args.verbose or episode % 10 == 0:
                     print('Ep %d:  Step %d Score %.2f Pmax %.2f'
 
                           % (episode, timestep, score, pmax))
 
-                stats = [
-
-                    episode, timestep, score, \
- \
-                    pmax, actor_loss, critic_loss
-
-                ]
+                stats = [episode,  score, pmax, actor_loss, critic_loss, acc_score]
 
                 # log stats
 
@@ -702,13 +686,15 @@ if __name__ == '__main__':
                         wr = csv.writer(f)
 
                         wr.writerow('%.4f' % s if type(s) is float else s for s in
-                                    [highscore, episode, score, dt.now().strftime('%Y-%m-%d %H:%M:%S')])
+                                    [highscore, episode, score])
 
                     agent.save_model('./save_model/' + agent_name + '_best')
 
                 agent.save_model('./save_model/' + agent_name)
 
                 episode += 1
+
+                print(episode)
 
                 # tf.summary.scalar("score", score, step=episode)
                 #
@@ -723,19 +709,6 @@ if __name__ == '__main__':
                 # tf.summary.scalar("a_loss", a_loss, step=global_step)
                 #
                 # tf.summary.scalar("policy", pmax, step=episode)
-
-
-                if episode%10 == 1:
-
-                    fig = plt.figure()
-
-                    ax = fig.add_subplot(1, 1, 1)
-
-                    ax.scatter(score_list, range(episode))
-
-                    plt.ion()
-
-                    plt.show()
 
             except KeyboardInterrupt:
 

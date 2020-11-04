@@ -1,8 +1,8 @@
-#Author: Fu Yangqing
-#NUS ID: A0225413R
-#Description:
-#Use A2C algorithm to train quadrotor to do soft motion
-#Update time:2020/10/30
+# Author: Fu Yangqing
+# NUS ID: A0225413R
+# Description:
+# Use A2C algorithm to train quadrotor to do soft motion
+# Update time:2020/10/30
 
 
 import time
@@ -11,10 +11,10 @@ import argparse
 import numpy as np
 import tensorflow as tf
 import csv
-import cv2
-import keras
-from datetime import datetime as dt
 
+import cv2
+
+import keras
 
 from keras.layers import Conv2D, MaxPooling2D, Dense, GRU, Input, ELU
 
@@ -26,7 +26,7 @@ from PIL import Image
 
 import os
 
-from Wind_env import windENV,Action_Space
+from Model_Based_ENV import windENV, Action_Space, object_pos
 
 agent_name = 'a2c'
 
@@ -43,8 +43,6 @@ class A2CAgent(object):
 
         self.acc_size = 3
 
-
-
         self.actor_lr = actor_lr
 
         self.critic_lr = critic_lr
@@ -57,24 +55,18 @@ class A2CAgent(object):
 
         self.horizon = horizon
 
-        self.sess = tf.Session()
-
-        keras.backend.set_session(self.sess)
-
         self.actor, self.critic = self.build_model()
 
-        _, self.target_critic = self.build_model()
+        _, self.critic2 = self.build_model()
 
         self.actor_update = self.build_actor_optimizer()
 
         self.critic_update = self.build_critic_optimizer()
 
-        self.sess.run(tf.global_variables_initializer())
-
         if load_model:
             self.load_model('./save_model/' + agent_name)
 
-        self.target_critic.set_weights(self.critic.get_weights())
+        self.critic2.set_weights(self.critic.get_weights())
 
         self.states, self.actions, self.rewards = [], [], []
 
@@ -87,21 +79,24 @@ class A2CAgent(object):
         image_process = keras.layers.BatchNormalization()(image)
 
         image_process = keras.layers.TimeDistributed(
-            Conv2D(32, (8, 8), activation='elu', padding='same', kernel_initializer='he_normal'))(image_process)
+            Conv2D(32, (8, 8), activation='elu', padding='valid', kernel_initializer='he_normal'))(image_process)
 
         image_process = keras.layers.TimeDistributed(MaxPooling2D((2, 2)))(image_process)
 
-        image_process = keras.layers.TimeDistributed(Conv2D(32, (5, 5), activation='elu', kernel_initializer='he_normal'))(
+        image_process = keras.layers.TimeDistributed(
+            Conv2D(32, (5, 5), activation='elu', kernel_initializer='he_normal'))(
             image_process)
 
         image_process = keras.layers.TimeDistributed(MaxPooling2D((2, 2)))(image_process)
 
-        image_process = keras.layers.TimeDistributed(Conv2D(16, (3, 3), activation='elu', kernel_initializer='he_normal'))(
+        image_process = keras.layers.TimeDistributed(
+            Conv2D(16, (3, 3), activation='elu', kernel_initializer='he_normal'))(
             image_process)
 
         image_process = keras.layers.TimeDistributed(MaxPooling2D((2, 2)))(image_process)
 
-        image_process = keras.layers.TimeDistributed(Conv2D(8, (1, 1), activation='elu', kernel_initializer='he_normal'))(
+        image_process = keras.layers.TimeDistributed(
+            Conv2D(8, (1, 1), activation='elu', kernel_initializer='he_normal'))(
             image_process)
 
         image_process = keras.layers.TimeDistributed(keras.layers.Flatten())(image_process)
@@ -133,7 +128,7 @@ class A2CAgent(object):
         policy = keras.layers.BatchNormalization()(policy)
 
         policy = Dense(self.action_size, activation='softmax',
-                       kernel_initializer=tf.random_uniform_initializer(minval=-2e-3, maxval=2e-3))(policy)
+                       kernel_initializer=tf.random_uniform_initializer(minval=-3e-3, maxval=3e-3))(policy)
 
         actor = Model(inputs=[image, acc], outputs=policy)
 
@@ -181,7 +176,7 @@ class A2CAgent(object):
 
         train = keras.backend.function([self.actor.input[0], self.actor.input[1], action, advantages],
 
-                           [loss], updates=updates)
+                                       [loss], updates=updates)
 
         return train
 
@@ -190,7 +185,6 @@ class A2CAgent(object):
         y = keras.backend.placeholder(shape=(None, 1))
 
         value = self.critic.output
-
 
         # # Huber loss
 
@@ -208,7 +202,7 @@ class A2CAgent(object):
 
         train = keras.backend.function([self.critic.input[0], self.critic.input[1], y],
 
-                           [loss], updates=updates)
+                                       [loss], updates=updates)
 
         return train
 
@@ -229,14 +223,13 @@ class A2CAgent(object):
         accs = np.zeros([len(self.states) + 1, self.acc_size], dtype=np.float32)
 
         for i in range(len(self.states)):
-
             images[i], accs[i] = self.states[i]
 
         images[-1], accs[-1] = next_state
 
         states = [images, accs]
 
-        values = self.target_critic.predict(states)
+        values = self.critic2.predict(states)
 
         values = np.reshape(values, len(values))
 
@@ -248,6 +241,7 @@ class A2CAgent(object):
             values[-1] = np.float32([0])
 
         for t in reversed(range(len(self.rewards))):
+
             delta = self.rewards[t] + self.gamma * values[t + 1] - values[t]
 
             gae = delta + self.gamma * self.lambd * gae
@@ -292,7 +286,7 @@ class A2CAgent(object):
 
     def update_target_model(self):
 
-        self.target_critic.set_weights(self.critic.get_weights())
+        self.critic2.set_weights(self.critic.get_weights())
 
     def load_model(self, name):
 
@@ -331,8 +325,6 @@ def transform_input(responses, img_height, img_width):
 
     image = np.array(image.resize((img_width, img_height)).convert('L'))
 
-    cv2.imwrite('view.png', image)
-
     image = np.float32(image.reshape(1, img_height, img_width, 1))
 
     image /= 255.0
@@ -341,61 +333,42 @@ def transform_input(responses, img_height, img_width):
 
 
 def interpret_action(action):
-    scaling_factor = 0.5
+    scaling_factor = 1.
 
-    basic_speed = 1.5
+    forward_factor = 0.5
 
     if action == 0:
 
-        RotorSpeed = (basic_speed,basic_speed,basic_speed,basic_speed)
+        quad_offset = (0, 0, 0)
 
     elif action == 1:
 
-        RotorSpeed = (basic_speed-scaling_factor, basic_speed-scaling_factor,basic_speed+scaling_factor,basic_speed+scaling_factor)
+        quad_offset = (scaling_factor + forward_factor, 0, 0)
 
     elif action == 2:
 
-        RotorSpeed = (basic_speed+scaling_factor, basic_speed+scaling_factor,basic_speed-scaling_factor, basic_speed-scaling_factor)
+        quad_offset = (forward_factor, scaling_factor, 0)
 
     elif action == 3:
 
-        RotorSpeed = (basic_speed+scaling_factor,basic_speed-scaling_factor,basic_speed+scaling_factor,basic_speed-scaling_factor)
+        quad_offset = (forward_factor, 0, scaling_factor)
 
     elif action == 4:
 
-        RotorSpeed = (basic_speed+scaling_factor, basic_speed-scaling_factor, basic_speed-scaling_factor,basic_speed+scaling_factor)
+        quad_offset = (-scaling_factor + forward_factor, 0, 0)
 
     elif action == 5:
 
-        RotorSpeed = (basic_speed+scaling_factor*0.5, basic_speed+scaling_factor*0.5, basic_speed+scaling_factor+scaling_factor*0.5,basic_speed+scaling_factor*0.5)
+        quad_offset = (forward_factor, -scaling_factor, 0)
 
     elif action == 6:
 
-        RotorSpeed = (basic_speed-scaling_factor, basic_speed-scaling_factor, basic_speed-scaling_factor,basic_speed-scaling_factor)
-    
-    elif action == 7:
+        quad_offset = (forward_factor, 0, -scaling_factor)
 
-        RotorSpeed = (basic_speed - scaling_factor, basic_speed - scaling_factor, basic_speed - scaling_factor,
-                      basic_speed + scaling_factor)
-    elif action == 8:
-
-        RotorSpeed = (basic_speed - scaling_factor, basic_speed + scaling_factor, basic_speed - scaling_factor,
-                  basic_speed - scaling_factor)
-    elif action == 9:
-
-        RotorSpeed = (basic_speed - scaling_factor, basic_speed + scaling_factor, basic_speed + scaling_factor,
-                  basic_speed + scaling_factor)
-    elif action == 10:
-
-        RotorSpeed = (basic_speed + scaling_factor, basic_speed - scaling_factor, basic_speed + scaling_factor,
-                  basic_speed + scaling_factor)
-
-
-    return RotorSpeed
+    return quad_offset
 
 
 if __name__ == '__main__':
-
 
     parser = argparse.ArgumentParser()
 
@@ -409,14 +382,13 @@ if __name__ == '__main__':
 
     parser.add_argument('--img_width', type=int, default=128)
 
-    parser.add_argument('--actor_lr', type=float, default=5e-5)
+    parser.add_argument('--actor_lr', type=float, default=5e-4)
 
-    parser.add_argument('--critic_lr', type=float, default=1e-4)
-
+    parser.add_argument('--critic_lr', type=float, default=5e-4)
 
     parser.add_argument('--gamma', type=float, default=0.99)
 
-    parser.add_argument('--lambd', type=float, default=0.90)
+    parser.add_argument('--lambd', type=float, default=0.96)
 
     parser.add_argument('--entropy', type=float, default=1e-3)
 
@@ -428,9 +400,6 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    if not os.path.exists('save_graph/' + agent_name):
-        os.makedirs('save_graph/' + agent_name)
-
     if not os.path.exists('save_stat'):
         os.makedirs('save_stat')
 
@@ -441,7 +410,7 @@ if __name__ == '__main__':
 
     state_size = [args.seqsize, args.img_height, args.img_width, 1]
 
-    action_size = 10
+    action_size = 7
 
     agent = A2CAgent(
 
@@ -461,7 +430,7 @@ if __name__ == '__main__':
 
         horizon=args.horizon,
 
-        load_model=args.load_model
+        load_model=args.load_model,
 
     )
 
@@ -469,7 +438,7 @@ if __name__ == '__main__':
 
     episode = 0
 
-    highscoreY = 0.
+    bias = np.linalg.norm(object_pos)
 
     if os.path.exists('save_stat/' + agent_name + '_stat.csv'):
         with open('save_stat/' + agent_name + '_stat.csv', 'r') as f:
@@ -497,7 +466,7 @@ if __name__ == '__main__':
 
                 # stats
 
-                timestep, score, pmax =  0, 0., 0.
+                timestep, score, pmax = 0, 0., 0.
 
                 observe = env.reset()
 
@@ -525,7 +494,7 @@ if __name__ == '__main__':
 
                     real_action = interpret_action(action)
 
-                    observe, reward, done, info = env.step(real_action)
+                    observe, reward, done, bias = env.step(real_action, bias)
 
                     image, acc = observe
 
@@ -534,8 +503,6 @@ if __name__ == '__main__':
                         image = transform_input(image, args.img_height, args.img_width)
 
                     except:
-
-
 
                         bug = True
 
@@ -559,7 +526,7 @@ if __name__ == '__main__':
 
                     if args.verbose:
                         print(
-                            'Step %d Action %s Reward %.2f Info %s:' % (timestep, real_action, reward, info['status']))
+                            'Step %d Action %s Reward %.2f Bias %.2f:' % (timestep, real_action, reward, bias))
 
                     state = next_state
 
@@ -586,7 +553,7 @@ if __name__ == '__main__':
 
         # Train
 
-        time_limit = 10
+        time_limit = 300
 
         if os.path.exists('save_stat/' + agent_name + '_stat.csv'):
             with open('save_stat/' + agent_name + '_stat.csv', 'r') as f:
@@ -610,7 +577,7 @@ if __name__ == '__main__':
 
                 # stats
 
-                bestS, timestep, score, pmax = 0., 0, 0., 0.
+                bestS, timestep, score, pmax, acc_score = 0., 0, 0., 0., 0.
 
                 t, actor_loss, critic_loss = 0, 0., 0.
 
@@ -619,14 +586,6 @@ if __name__ == '__main__':
                 image, acc = observe
 
                 image = transform_input(image, args.img_height, args.img_width)
-
-                # try:
-                #
-                #     image = transform_input(image, args.img_height, args.img_width)
-                #
-                # except:
-                #
-                #     continue
 
                 history = np.stack([image] * args.seqsize, axis=1)
 
@@ -653,32 +612,17 @@ if __name__ == '__main__':
 
                     print(f'real action is {real_action}')
 
-                    observe, reward, done = env.step(real_action)
+                    observe, reward, done, bias = env.step(real_action, bias)
 
                     image, acc = observe
 
-                    # if timestep < 3:
-                    #
-                    #     raise Exception
-
                     image = transform_input(image, args.img_height, args.img_width)
-                    #
-                    # try:
-                    #
-                    #     if timestep < 3 :
-                    #         raise Exception
-                    #
-                    #     image = transform_input(image, args.img_height, args.img_width)
-                    #
-                    # except:
-                    #
-                    #     bug = True
-                    #
-                    #     break
 
                     history = np.append(history[:, 1:], [image], axis=1)
 
                     acc = acc.reshape(1, -1)
+
+                    acc_s = np.linalg.norm(acc)
 
                     next_state = [history, acc]
 
@@ -687,6 +631,8 @@ if __name__ == '__main__':
                     # stats
 
                     score += reward
+
+                    acc_score += acc_s
 
                     pmax += float(np.amax(policy))
 
@@ -712,22 +658,18 @@ if __name__ == '__main__':
 
                 critic_loss /= (timestep // args.horizon + 1)
 
+                acc_score /= (timestep // args.horizon + 1)
+
                 if args.verbose or episode % 10 == 0:
                     print('Ep %d:  Step %d Score %.2f Pmax %.2f'
 
                           % (episode, timestep, score, pmax))
 
-                stats = [
-
-                    episode, timestep, score, \
- \
-                    pmax, actor_loss, critic_loss
-
-                ]
+                stats = [episode,  score, pmax, actor_loss, critic_loss, acc_score]
 
                 # log stats
 
-                with open('save_state/' + agent_name + '_state.csv', 'a', encoding='utf-8', newline='') as f:
+                with open('save_stat/' + agent_name + '_stat.csv', 'a', encoding='utf-8', newline='') as f:
 
                     wr = csv.writer(f)
 
@@ -744,13 +686,29 @@ if __name__ == '__main__':
                         wr = csv.writer(f)
 
                         wr.writerow('%.4f' % s if type(s) is float else s for s in
-                                    [highscoreY, episode, score, dt.now().strftime('%Y-%m-%d %H:%M:%S')])
+                                    [highscore, episode, score])
 
                     agent.save_model('./save_model/' + agent_name + '_best')
 
                 agent.save_model('./save_model/' + agent_name)
 
                 episode += 1
+
+                print(episode)
+
+                # tf.summary.scalar("score", score, step=episode)
+                #
+                # tf.summary.scalar("reward", reward, step=global_step)
+                #
+                # tf.summary.scalar("actor_loss", actor_loss, step=episode)
+                #
+                # tf.summary.scalar("critic_loss", critic_loss, step=episode)
+                #
+                # tf.summary.scalar("c_loss", c_loss, step=global_step)
+                #
+                # tf.summary.scalar("a_loss", a_loss, step=global_step)
+                #
+                # tf.summary.scalar("policy", pmax, step=episode)
 
             except KeyboardInterrupt:
 
