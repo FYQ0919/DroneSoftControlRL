@@ -8,7 +8,6 @@ object_pos = [13,0,1]
 outZ = [-5, 2]
 outY = [-5,5]
 outX = [-5,15]
-Action_Space = ['00', '+x', '+y', '+z', '-x', '-y', '-z']
 
 np.random.seed(10)
 
@@ -35,8 +34,10 @@ class windENV():
         self.cl.hoverAsync().join()
         self.cl.simPause(True)
         state_acc = self.cl.getMultirotorState().kinematics_estimated.angular_acceleration
+        vel =  self.cl.getMultirotorState().kinematics_estimated.linear_velocity
         Img = self.cl.simGetImages([airsim.ImageRequest(1, airsim.ImageType.DepthVis, True)])
         state_acc = np.array([state_acc.x_val, state_acc.y_val, state_acc.z_val])
+        vel = np.array([vel.x_val, vel.y_val, vel.z_val])
         observation = [Img,state_acc]
         return observation
 
@@ -97,13 +98,13 @@ class windENV():
         distance =  np.linalg.norm(bias)
         new_distance =  np.linalg.norm(new_bias)
         weight_ar = 1.0
-        weight_dis = 1.0
+        weight_dis = 0.5
         weight_vr = 0.1
 
         if stop:
             reward = -50
         elif success:
-            reward = 200
+            reward = 500
         else:
             #define diiferent reward:
 

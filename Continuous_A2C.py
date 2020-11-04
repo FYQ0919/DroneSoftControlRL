@@ -1,7 +1,7 @@
 # Author: Fu Yangqing
 # NUS ID: A0225413R
 # Description:
-# Use A2C algorithm to train quadrotor to do soft motion
+# Use A2C algorithm to train quadrotor to do soft motion (Continuous action space)
 # Update time:2020/10/30
 
 
@@ -16,7 +16,7 @@ import cv2
 
 import keras
 
-from keras.layers import Conv2D, MaxPooling2D, Dense, GRU, Input, ELU
+from keras.layers import Conv2D, MaxPooling2D, Dense, GRU, Input, ELU, Lambda
 
 from keras.optimizers import Adam
 
@@ -26,34 +26,36 @@ from PIL import Image
 
 import os
 
-from Model_Based_ENV import windENV, Action_Space, object_pos
+from Continuous_a2c_env import windENV, object_pos
 
-agent_name = 'a2c'
+
 
 
 class A2CAgent(object):
 
     def __init__(self, state_size, action_size, actor_lr, critic_lr,
 
-                 gamma, lambd, entropy, horizon, load_model):
-
-        self.state_size = state_size
-
-        self.action_size = action_size
-
-        self.acc_size = 3
+                 gamma, lambd, entropy, updatetime, load_model):
 
         self.actor_lr = actor_lr
 
         self.critic_lr = critic_lr
+
+        self.state_size = state_size
+
+        self.action_high = 1.0
+
+        self.action_low = -self.action_high
+
+        self.action_size = action_size
+
+        self.acc_size = 3
 
         self.gamma = gamma
 
         self.lambd = lambd
 
         self.entropy = entropy
-
-        self.horizon = horizon
 
         self.actor, self.critic = self.build_model()
 
@@ -63,8 +65,11 @@ class A2CAgent(object):
 
         self.critic_update = self.build_critic_optimizer()
 
+        self.updatetime = updatetime
+
         if load_model:
-            self.load_model('./save_model/' + agent_name)
+
+            self.load_model('./save_model_con/' + agent_name)
 
         self.critic2.set_weights(self.critic.get_weights())
 
@@ -74,63 +79,67 @@ class A2CAgent(object):
 
         # shared network
 
-        image = Input(shape=self.state_size)
+        x1 = Input(shape=self.state_size)
 
-        image_process = keras.layers.BatchNormalization()(image)
+        layer1 = keras.layers.BatchNormalization()(x1)
 
-        image_process = keras.layers.TimeDistributed(
-            Conv2D(32, (8, 8), activation='elu', padding='valid', kernel_initializer='he_normal'))(image_process)
+        layer2 = keras.layers.TimeDistributed(Conv2D(64, (8, 8), activation='relu', padding='valid'))(layer1)
 
-        image_process = keras.layers.TimeDistributed(MaxPooling2D((2, 2)))(image_process)
+        layer3 = keras.layers.TimeDistributed(MaxPooling2D((2, 2)))(layer2)
 
-        image_process = keras.layers.TimeDistributed(
-            Conv2D(32, (5, 5), activation='elu', kernel_initializer='he_normal'))(
-            image_process)
+        layer4 = keras.layers.TimeDistributed(Conv2D(64, (5, 5), activation='relu'))(layer3)
 
-        image_process = keras.layers.TimeDistributed(MaxPooling2D((2, 2)))(image_process)
+        layer5 = keras.layers.TimeDistributed(MaxPooling2D((2, 2)))(layer4)
 
-        image_process = keras.layers.TimeDistributed(
-            Conv2D(16, (3, 3), activation='elu', kernel_initializer='he_normal'))(
-            image_process)
+        layer6 = keras.layers.TimeDistributed(
+            Conv2D(32, (3, 3), activation='relu'))(layer5)
 
-        image_process = keras.layers.TimeDistributed(MaxPooling2D((2, 2)))(image_process)
+        layer7 = keras.layers.TimeDistributed(MaxPooling2D((2, 2)))(layer6)
 
-        image_process = keras.layers.TimeDistributed(
-            Conv2D(8, (1, 1), activation='elu', kernel_initializer='he_normal'))(
-            image_process)
+        layer8 = keras.layers.TimeDistributed(Conv2D(16, (1, 1), activation='relu'))(layer7)
 
-        image_process = keras.layers.TimeDistributed(keras.layers.Flatten())(image_process)
+        layer9 = keras.layers.Dropout(rate=0.2)(layer8)
 
-        image_process = GRU(64, kernel_initializer='he_normal', use_bias=False)(image_process)
+        layer10 = keras.layers.TimeDistributed(keras.layers.Flatten())(layer9)
 
-        image_process = keras.layers.BatchNormalization()(image_process)
+        layer11 = GRU(32, kernel_initializer='he_normal', use_bias=False)(layer10)
 
-        image_process = keras.layers.Activation('tanh')(image_process)
+        layer12 = keras.layers.BatchNormalization()(layer11)
+
+        image_out = keras.layers.Activation('tanh')(layer12)
 
         # acc process
 
         acc = Input(shape=[self.acc_size])
 
-        acc_process = Dense(6, kernel_initializer='he_normal', use_bias=False)(acc)
+        acc_process = Dense(32)(acc)
 
         acc_process = keras.layers.BatchNormalization()(acc_process)
 
         acc_process = keras.layers.Activation('tanh')(acc_process)
 
-        state_process = image_process
+        state_process = keras.layers.Add()([image_out, acc_process])
 
         # Actor
 
-        policy = Dense(128, kernel_initializer='he_normal', use_bias=False)(state_process)
-
-        policy = ELU()(policy)
+        policy = Dense(16, use_bias=False)(state_process)
 
         policy = keras.layers.BatchNormalization()(policy)
 
-        policy = Dense(self.action_size, activation='softmax',
-                       kernel_initializer=tf.random_uniform_initializer(minval=-3e-3, maxval=3e-3))(policy)
+        policy = ELU()(policy)
 
-        actor = Model(inputs=[image, acc], outputs=policy)
+        policy = Dense(64, use_bias=False)(policy)
+
+        policy = keras.layers.BatchNormalization()(policy)
+
+        policy = keras.layers.Activation('tanh')(policy)
+
+        policy = Dense(self.action_size, kernel_initializer=tf.random_uniform_initializer(minval=-3e-3, maxval=3e-3))(
+            policy)
+
+        policy = Lambda(lambda x: keras.backend.clip(x, self.action_low, self.action_high))(policy)
+
+        actor = Model(inputs=[x1, acc], outputs=policy)
 
         # Critic
 
@@ -142,7 +151,7 @@ class A2CAgent(object):
 
         value = Dense(1, kernel_initializer=tf.random_uniform_initializer(minval=-3e-3, maxval=3e-3))(value)
 
-        critic = Model(inputs=[image, acc], outputs=value)
+        critic = Model(inputs=[x1, acc], outputs=value)
 
         actor._make_predict_function()
 
@@ -152,33 +161,28 @@ class A2CAgent(object):
 
     def build_actor_optimizer(self):
 
-        action = keras.backend.placeholder(shape=[None, self.action_size])
+        value = self.critic.output
 
-        advantages = keras.backend.placeholder(shape=[None, ])
+        action_grad = tf.gradients(value, self.critic.input[1])
 
-        policy = self.actor.output
+        target = -action_grad[0]
 
-        action_prob = keras.backend.sum(action * policy, axis=1)
+        params_grad = tf.gradients(self.actor.output, self.actor.trainable_weights, target)
 
-        cross_entropy = keras.backend.log(action_prob + 1e-6) * advantages
+        params_grad, global_norm = tf.clip_by_global_norm(params_grad, 5.0)
 
-        cross_entropy = -keras.backend.mean(cross_entropy)
+        grads = zip(params_grad, self.actor.trainable_weights)
 
-        entropy = keras.backend.sum(policy * keras.backend.log(policy + 1e-6), axis=1)
+        optimizer = tf.train.AdamOptimizer(self.actor_lr)
 
-        entropy = keras.backend.mean(entropy)
+        updates = optimizer.apply_gradients(grads)
 
-        loss = cross_entropy + self.entropy * entropy
-
-        optimizer = Adam(lr=self.actor_lr)
-
-        updates = optimizer.get_updates(self.actor.trainable_weights, [], loss)
-
-        train = keras.backend.function([self.actor.input[0], self.actor.input[1], action, advantages],
-
-                                       [loss], updates=updates)
+        train = keras.backend.function([self.actor.input[0], self.actor.input[1]],[global_norm],
+            updates=[updates])
 
         return train
+
+
 
     def build_critic_optimizer(self):
 
@@ -208,11 +212,21 @@ class A2CAgent(object):
 
     def get_action(self, state):
 
+        forward_factor = 0.5
+
         policy = self.actor.predict(state)[0]
 
-        policy = np.array(policy)
+        action = np.clip(policy , self.action_low, self.action_high)
 
-        action = np.random.choice(self.action_size, 1, p=policy)[0]
+        action[0] = action[0] + forward_factor
+
+        action[2] -= 0.5
+
+        action_noise = np.random.uniform(-0.2,0.2,1)
+
+        d = np.random.randint(0,2)
+
+        action[d] += action_noise
 
         return action, policy
 
@@ -268,11 +282,7 @@ class A2CAgent(object):
 
         self.states.append(state)
 
-        act = np.zeros(self.action_size)
-
-        act[action] = 1
-
-        self.actions.append(act)
+        self.actions.append(action)
 
         self.rewards.append(reward)
 
@@ -290,21 +300,21 @@ class A2CAgent(object):
 
     def load_model(self, name):
 
-        if os.path.exists(name + '_actor.h5'):
-            self.actor.load_weights(name + '_actor.h5')
+        if os.path.exists(name + 'con_actor.h5'):
+            self.actor.load_weights(name + 'con_actor.h5')
 
             print('Actor loaded')
 
-        if os.path.exists(name + '_critic.h5'):
-            self.critic.load_weights(name + '_critic.h5')
+        if os.path.exists(name + 'con_critic.h5'):
+            self.critic.load_weights(name + 'con_critic.h5')
 
             print('Critic loaded')
 
     def save_model(self, name):
 
-        self.actor.save_weights(name + '_actor.h5')
+        self.actor.save_weights(name + 'con_actor.h5')
 
-        self.critic.save_weights(name + '_critic.h5')
+        self.critic.save_weights(name + 'con_critic.h5')
 
 
 '''
@@ -315,6 +325,7 @@ Environment interaction
 
 
 def transform_input(responses, img_height, img_width):
+
     img1d = np.array(responses[0].image_data_float, dtype=np.float)
 
     img1d = np.array(np.clip(255 * 3 * img1d, 0, 255), dtype=np.uint8)
@@ -332,51 +343,16 @@ def transform_input(responses, img_height, img_width):
     return image
 
 
-def interpret_action(action):
-    scaling_factor = 1.
-
-    forward_factor = 0.5
-
-    if action == 0:
-
-        quad_offset = (0, 0, 0)
-
-    elif action == 1:
-
-        quad_offset = (scaling_factor + forward_factor, 0, 0)
-
-    elif action == 2:
-
-        quad_offset = (forward_factor, scaling_factor, 0)
-
-    elif action == 3:
-
-        quad_offset = (forward_factor, 0, scaling_factor)
-
-    elif action == 4:
-
-        quad_offset = (-scaling_factor + forward_factor, 0, 0)
-
-    elif action == 5:
-
-        quad_offset = (forward_factor, -scaling_factor, 0)
-
-    elif action == 6:
-
-        quad_offset = (forward_factor, 0, -scaling_factor)
-
-    return quad_offset
-
 
 if __name__ == '__main__':
 
-    parser = argparse.ArgumentParser()
+    agent_name = 'Continuous a2c'
 
-    parser.add_argument('--verbose', action='store_true')
+    parser = argparse.ArgumentParser()
 
     parser.add_argument('--load_model', action='store_true')
 
-    parser.add_argument('--play', action='store_true')
+    parser.add_argument('--test', action='store_true')
 
     parser.add_argument('--img_height', type=int, default=72)
 
@@ -392,7 +368,7 @@ if __name__ == '__main__':
 
     parser.add_argument('--entropy', type=float, default=1e-3)
 
-    parser.add_argument('--horizon', type=int, default=32)
+    parser.add_argument('--updatetime', type=int, default=32)
 
     parser.add_argument('--seqsize', type=int, default=5)
 
@@ -400,17 +376,17 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    if not os.path.exists('save_stat'):
-        os.makedirs('save_stat')
+    if not os.path.exists('save_stat_con'):
+        os.makedirs('save_stat_con')
 
-    if not os.path.exists('save_model'):
-        os.makedirs('save_model')
+    if not os.path.exists('save_model_con'):
+        os.makedirs('save_model_con')
 
     # Make RL agent
 
     state_size = [args.seqsize, args.img_height, args.img_width, 1]
 
-    action_size = 7
+    action_size = 3
 
     agent = A2CAgent(
 
@@ -428,7 +404,7 @@ if __name__ == '__main__':
 
         entropy=args.entropy,
 
-        horizon=args.horizon,
+        updatetime=args.updatetime,
 
         load_model=args.load_model,
 
@@ -440,8 +416,8 @@ if __name__ == '__main__':
 
     bias = np.linalg.norm(object_pos)
 
-    if os.path.exists('save_stat/' + agent_name + '_stat.csv'):
-        with open('save_stat/' + agent_name + '_stat.csv', 'r') as f:
+    if os.path.exists('save_stat_con/' + agent_name + '_stat.csv'):
+        with open('save_stat_con/' + agent_name + '_stat.csv', 'r') as f:
             read = csv.reader(f)
 
             episode = int(float(next(reversed(list(read)))[0]))
@@ -454,7 +430,7 @@ if __name__ == '__main__':
 
     env = windENV()
 
-    if args.play:
+    if args.test:
 
         while True:
 
@@ -492,9 +468,7 @@ if __name__ == '__main__':
 
                     action, policy = agent.get_action(state)
 
-                    real_action = interpret_action(action)
-
-                    observe, reward, done, bias = env.step(real_action, bias)
+                    observe, reward, done, bias = env.step(action, bias)
 
                     image, acc = observe
 
@@ -521,12 +495,6 @@ if __name__ == '__main__':
                     pmax += float(np.amax(policy))
 
                     score += reward
-
-                    print('%s' % (Action_Space[action]), end='\r', flush=True)
-
-                    if args.verbose:
-                        print(
-                            'Step %d Action %s Reward %.2f Bias %.2f:' % (timestep, real_action, reward, bias))
 
                     state = next_state
 
@@ -555,8 +523,8 @@ if __name__ == '__main__':
 
         time_limit = 300
 
-        if os.path.exists('save_stat/' + agent_name + '_stat.csv'):
-            with open('save_stat/' + agent_name + '_stat.csv', 'r') as f:
+        if os.path.exists('save_stat_con/' + agent_name + '_stat.csv'):
+            with open('save_stat_con/' + agent_name + '_stat.csv', 'r') as f:
                 read = csv.reader(f)
 
                 episode = int(float(next(reversed(list(read)))[0]))
@@ -608,11 +576,9 @@ if __name__ == '__main__':
 
                     action, policy = agent.get_action(state)
 
-                    real_action = interpret_action(action)
+                    print(f'real action is {action}')
 
-                    print(f'real action is {real_action}')
-
-                    observe, reward, done, bias = env.step(real_action, bias)
+                    observe, reward, done, bias = env.step(action, bias)
 
                     image, acc = observe
 
@@ -636,7 +602,8 @@ if __name__ == '__main__':
 
                     pmax += float(np.amax(policy))
 
-                    if t >= args.horizon or done:
+                    if t >= args.updatetime or done:
+
                         t = 0
 
                         a_loss, c_loss = agent.train_model(next_state, done)
@@ -654,22 +621,22 @@ if __name__ == '__main__':
 
                 pmax /= timestep
 
-                actor_loss /= (timestep // args.horizon + 1)
+                actor_loss /= (timestep // args.updatetime + 1)
 
-                critic_loss /= (timestep // args.horizon + 1)
+                critic_loss /= (timestep // args.updatetime + 1)
 
-                acc_score /= (timestep // args.horizon + 1)
+                acc_score /= (timestep // args.updatetime + 1)
 
-                if args.verbose or episode % 10 == 0:
+                if episode % 10 == 0:
                     print('Ep %d:  Step %d Score %.2f Pmax %.2f'
 
                           % (episode, timestep, score, pmax))
 
-                stats = [episode,  score, pmax, actor_loss, critic_loss, acc_score]
+                stats = [episode,  score, pmax, actor_loss, critic_loss, acc_score,timestep]
 
                 # log stats
 
-                with open('save_stat/' + agent_name + '_stat.csv', 'a', encoding='utf-8', newline='') as f:
+                with open('save_stat_con/' + agent_name + '_stat.csv', 'a', encoding='utf-8', newline='') as f:
 
                     wr = csv.writer(f)
 
@@ -682,15 +649,15 @@ if __name__ == '__main__':
                     bestS = np.max(score)
                     highscore = bestS
 
-                    with open('save_stat/' + agent_name + '_highscore.csv', 'w', encoding='utf-8', newline='') as f:
+                    with open('save_stat_con/' + agent_name + '_highscore.csv', 'w', encoding='utf-8', newline='') as f:
                         wr = csv.writer(f)
 
                         wr.writerow('%.4f' % s if type(s) is float else s for s in
                                     [highscore, episode, score])
 
-                    agent.save_model('./save_model/' + agent_name + '_best')
+                    agent.save_model('./save_model_con/' + agent_name + '_best')
 
-                agent.save_model('./save_model/' + agent_name)
+                agent.save_model('./save_model_con/' + agent_name)
 
                 episode += 1
 

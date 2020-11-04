@@ -1,7 +1,7 @@
 # Author: Fu Yangqing
 # NUS ID: A0225413R
 # Description:
-# Use A2C algorithm to train quadrotor to do soft motion
+# Use A2C algorithm to train quadrotor to do soft motion (Discrete action space)
 # Update time:2020/10/30
 
 
@@ -26,16 +26,20 @@ from PIL import Image
 
 import os
 
-from Model_Based_ENV import windENV, Action_Space, object_pos
+from Model_Based_ENV import windENV, object_pos
 
-agent_name = 'a2c'
+
 
 
 class A2CAgent(object):
 
     def __init__(self, state_size, action_size, actor_lr, critic_lr,
 
-                 gamma, lambd, entropy, horizon, load_model):
+                 gamma, lambd, entropy, updatetime, load_model):
+
+        self.actor_lr = actor_lr
+
+        self.critic_lr = critic_lr
 
         self.state_size = state_size
 
@@ -43,17 +47,11 @@ class A2CAgent(object):
 
         self.acc_size = 3
 
-        self.actor_lr = actor_lr
-
-        self.critic_lr = critic_lr
-
         self.gamma = gamma
 
         self.lambd = lambd
 
         self.entropy = entropy
-
-        self.horizon = horizon
 
         self.actor, self.critic = self.build_model()
 
@@ -63,7 +61,10 @@ class A2CAgent(object):
 
         self.critic_update = self.build_critic_optimizer()
 
+        self.updatetime = updatetime
+
         if load_model:
+
             self.load_model('./save_model/' + agent_name)
 
         self.critic2.set_weights(self.critic.get_weights())
@@ -74,50 +75,46 @@ class A2CAgent(object):
 
         # shared network
 
-        image = Input(shape=self.state_size)
+        x1 = Input(shape=self.state_size)
 
-        image_process = keras.layers.BatchNormalization()(image)
+        layer1 = keras.layers.BatchNormalization()(x1)
 
-        image_process = keras.layers.TimeDistributed(
-            Conv2D(32, (8, 8), activation='elu', padding='valid', kernel_initializer='he_normal'))(image_process)
+        layer2 = keras.layers.TimeDistributed(Conv2D(64, (8, 8), activation='relu', padding='valid'))(layer1)
 
-        image_process = keras.layers.TimeDistributed(MaxPooling2D((2, 2)))(image_process)
+        layer3 = keras.layers.TimeDistributed(MaxPooling2D((2, 2)))(layer2)
 
-        image_process = keras.layers.TimeDistributed(
-            Conv2D(32, (5, 5), activation='elu', kernel_initializer='he_normal'))(
-            image_process)
+        layer4 = keras.layers.TimeDistributed(Conv2D(64, (5, 5), activation='relu'))(layer3)
 
-        image_process = keras.layers.TimeDistributed(MaxPooling2D((2, 2)))(image_process)
+        layer5 = keras.layers.TimeDistributed(MaxPooling2D((2, 2)))(layer4)
 
-        image_process = keras.layers.TimeDistributed(
-            Conv2D(16, (3, 3), activation='elu', kernel_initializer='he_normal'))(
-            image_process)
+        layer6 = keras.layers.TimeDistributed(
+            Conv2D(32, (3, 3), activation='relu'))(layer5)
 
-        image_process = keras.layers.TimeDistributed(MaxPooling2D((2, 2)))(image_process)
+        layer7 = keras.layers.TimeDistributed(MaxPooling2D((2, 2)))(layer6)
 
-        image_process = keras.layers.TimeDistributed(
-            Conv2D(8, (1, 1), activation='elu', kernel_initializer='he_normal'))(
-            image_process)
+        layer8 = keras.layers.TimeDistributed(Conv2D(16, (1, 1), activation='relu'))(layer7)
 
-        image_process = keras.layers.TimeDistributed(keras.layers.Flatten())(image_process)
+        layer9 = keras.layers.Dropout(rate=0.2)(layer8)
 
-        image_process = GRU(64, kernel_initializer='he_normal', use_bias=False)(image_process)
+        layer10 = keras.layers.TimeDistributed(keras.layers.Flatten())(layer9)
 
-        image_process = keras.layers.BatchNormalization()(image_process)
+        layer11 = GRU(32, kernel_initializer='he_normal', use_bias=False)(layer10)
 
-        image_process = keras.layers.Activation('tanh')(image_process)
+        layer12 = keras.layers.BatchNormalization()(layer11)
+
+        image_out = keras.layers.Activation('sigmoid')(layer12)
 
         # acc process
 
         acc = Input(shape=[self.acc_size])
 
-        acc_process = Dense(6, kernel_initializer='he_normal', use_bias=False)(acc)
+        acc_process = Dense(12)(acc)
 
         acc_process = keras.layers.BatchNormalization()(acc_process)
 
-        acc_process = keras.layers.Activation('tanh')(acc_process)
+        acc_process = keras.layers.Activation('sigmoid')(acc_process)
 
-        state_process = image_process
+        state_process = image_out
 
         # Actor
 
@@ -130,7 +127,7 @@ class A2CAgent(object):
         policy = Dense(self.action_size, activation='softmax',
                        kernel_initializer=tf.random_uniform_initializer(minval=-3e-3, maxval=3e-3))(policy)
 
-        actor = Model(inputs=[image, acc], outputs=policy)
+        actor = Model(inputs=[x1, acc], outputs=policy)
 
         # Critic
 
@@ -142,7 +139,7 @@ class A2CAgent(object):
 
         value = Dense(1, kernel_initializer=tf.random_uniform_initializer(minval=-3e-3, maxval=3e-3))(value)
 
-        critic = Model(inputs=[image, acc], outputs=value)
+        critic = Model(inputs=[x1, acc], outputs=value)
 
         actor._make_predict_function()
 
@@ -370,13 +367,13 @@ def interpret_action(action):
 
 if __name__ == '__main__':
 
-    parser = argparse.ArgumentParser()
+    agent_name = 'a2c'
 
-    parser.add_argument('--verbose', action='store_true')
+    parser = argparse.ArgumentParser()
 
     parser.add_argument('--load_model', action='store_true')
 
-    parser.add_argument('--play', action='store_true')
+    parser.add_argument('--test', action='store_true')
 
     parser.add_argument('--img_height', type=int, default=72)
 
@@ -392,7 +389,7 @@ if __name__ == '__main__':
 
     parser.add_argument('--entropy', type=float, default=1e-3)
 
-    parser.add_argument('--horizon', type=int, default=32)
+    parser.add_argument('--updatetime', type=int, default=32)
 
     parser.add_argument('--seqsize', type=int, default=5)
 
@@ -428,7 +425,7 @@ if __name__ == '__main__':
 
         entropy=args.entropy,
 
-        horizon=args.horizon,
+        updatetime=args.updatetime,
 
         load_model=args.load_model,
 
@@ -454,7 +451,7 @@ if __name__ == '__main__':
 
     env = windENV()
 
-    if args.play:
+    if args.test:
 
         while True:
 
@@ -521,12 +518,6 @@ if __name__ == '__main__':
                     pmax += float(np.amax(policy))
 
                     score += reward
-
-                    print('%s' % (Action_Space[action]), end='\r', flush=True)
-
-                    if args.verbose:
-                        print(
-                            'Step %d Action %s Reward %.2f Bias %.2f:' % (timestep, real_action, reward, bias))
 
                     state = next_state
 
@@ -636,7 +627,8 @@ if __name__ == '__main__':
 
                     pmax += float(np.amax(policy))
 
-                    if t >= args.horizon or done:
+                    if t >= args.updatetime or done:
+
                         t = 0
 
                         a_loss, c_loss = agent.train_model(next_state, done)
@@ -654,18 +646,18 @@ if __name__ == '__main__':
 
                 pmax /= timestep
 
-                actor_loss /= (timestep // args.horizon + 1)
+                actor_loss /= (timestep // args.updatetime + 1)
 
-                critic_loss /= (timestep // args.horizon + 1)
+                critic_loss /= (timestep // args.updatetime + 1)
 
-                acc_score /= (timestep // args.horizon + 1)
+                acc_score /= (timestep // args.updatetime + 1)
 
-                if args.verbose or episode % 10 == 0:
+                if episode % 10 == 0:
                     print('Ep %d:  Step %d Score %.2f Pmax %.2f'
 
                           % (episode, timestep, score, pmax))
 
-                stats = [episode,  score, pmax, actor_loss, critic_loss, acc_score]
+                stats = [episode,  score, pmax, actor_loss, critic_loss, acc_score,timestep]
 
                 # log stats
 
