@@ -47,15 +47,28 @@ class windENV():
         self.cl.simPause(False)
         self.cl.moveByVelocityAsync(speed[0], speed[1], speed[2] , duration=self.duration)
         start = time.time()
+        collision_count = 0
+        has_collided = False
         while time.time() - start < self.duration:
             #Add Wind Noise
             self.add_wind()
             time.sleep(self.duration)
 
             #get states
-            pos = self.cl.getMultirotorState().kinematics_estimated.position
             velocity = self.cl.getMultirotorState().kinematics_estimated.linear_velocity
-            angle_acc = self.cl.getMultirotorState().kinematics_estimated.angular_acceleration
+
+            collided = self.cl.simGetCollisionInfo().has_collided
+
+            Speed = np.linalg.norm(np.array([velocity.x_val, velocity.y_val, velocity.z_val], dtype=np.float))
+
+
+            slow = Speed < 0.05
+
+            if collided or slow:
+                collision_count += 1
+            if collision_count > 10:
+                has_collided = True
+                break
 
         self.cl.simPause(True)
 
@@ -66,7 +79,8 @@ class windENV():
         angle_acc = self.cl.getMultirotorState().kinematics_estimated.angular_acceleration
 
         #define stop condition
-        stop = pos.y_val < outY[0] or pos.y_val > outY[1] or pos.z_val < outZ[0] or pos.z_val > outZ[1] or pos.x_val < outX[0] or pos.x_val > outX[1]
+        stop = pos.y_val < outY[0] or pos.y_val > outY[1] or pos.z_val < outZ[0] or pos.z_val > outZ[1]\
+               or pos.x_val < outX[0] or pos.x_val > outX[1] or has_collided
         pos = np.array([pos.x_val,pos.y_val,pos.z_val],dtype=np.float)
         print(f'position is {pos}')
         new_bias = pos - object_pos
@@ -97,9 +111,9 @@ class windENV():
         standard_dis = np.linalg.norm(object_pos)
         distance =  np.linalg.norm(bias)
         new_distance =  np.linalg.norm(new_bias)
-        weight_ar = 1.0
-        weight_dis = 0.5
-        weight_vr = 0.1
+        weight_ar = 0.8
+        weight_dis = 0.25
+        weight_vr = 0.2
 
         if stop:
             reward = -50

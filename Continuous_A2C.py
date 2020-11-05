@@ -228,6 +228,8 @@ class A2CAgent(object):
 
         action[d] += action_noise
 
+        action = np.round(action,1)
+
         return action, policy
 
     def train_model(self, next_state, done):
@@ -368,7 +370,7 @@ if __name__ == '__main__':
 
     parser.add_argument('--entropy', type=float, default=1e-3)
 
-    parser.add_argument('--updatetime', type=int, default=32)
+    parser.add_argument('--updatetime', type=int, default=12)
 
     parser.add_argument('--seqsize', type=int, default=5)
 

@@ -389,7 +389,7 @@ if __name__ == '__main__':
 
     parser.add_argument('--entropy', type=float, default=1e-3)
 
-    parser.add_argument('--updatetime', type=int, default=32)
+    parser.add_argument('--updatetime', type=int, default=12)
 
     parser.add_argument('--seqsize', type=int, default=5)
 
