@@ -11,9 +11,6 @@ import argparse
 import numpy as np
 import tensorflow as tf
 import csv
-
-import cv2
-
 import keras
 
 from keras.layers import Conv2D, MaxPooling2D, Dense, GRU, Input, ELU
@@ -332,7 +329,7 @@ def transform_input(responses, img_height, img_width):
 def interpret_action(action):
     scaling_factor = 1.
 
-    forward_factor = 0.2
+    forward_factor = 0.3
 
     if action == 0:
 
@@ -367,11 +364,12 @@ def interpret_action(action):
 
 if __name__ == '__main__':
 
+    tf_config = tf.ConfigProto()
+    tf_config.gpu_options.allow_growth = True
+
     agent_name = 'a2c'
 
     parser = argparse.ArgumentParser()
-
-    parser.add_argument('--load_model', action='store_true')
 
     parser.add_argument('--test', action='store_true')
 
@@ -379,17 +377,17 @@ if __name__ == '__main__':
 
     parser.add_argument('--img_width', type=int, default=128)
 
-    parser.add_argument('--actor_lr', type=float, default=5e-4)
+    parser.add_argument('--actor_lr', type=float, default=5e-5)
 
-    parser.add_argument('--critic_lr', type=float, default=5e-4)
+    parser.add_argument('--critic_lr', type=float, default=5e-5)
 
-    parser.add_argument('--gamma', type=float, default=0.99)
+    parser.add_argument('--gamma', type=float, default=0.999)
 
     parser.add_argument('--lambd', type=float, default=0.96)
 
-    parser.add_argument('--entropy', type=float, default=1e-3)
+    parser.add_argument('--entropy', type=float, default=5e-3)
 
-    parser.add_argument('--updatetime', type=int, default=12)
+    parser.add_argument('--updatetime', type=int, default=32)
 
     parser.add_argument('--seqsize', type=int, default=5)
 
@@ -427,7 +425,7 @@ if __name__ == '__main__':
 
         updatetime=args.updatetime,
 
-        load_model=args.load_model,
+        load_model=True,
 
     )
 
@@ -437,15 +435,6 @@ if __name__ == '__main__':
 
     bias = np.linalg.norm(object_pos)
 
-    if os.path.exists('save_stat/' + agent_name + '_stat.csv'):
-        with open('save_stat/' + agent_name + '_stat.csv', 'r') as f:
-            read = csv.reader(f)
-
-            episode = int(float(next(reversed(list(read)))[0]))
-
-            print('Last episode:', episode)
-
-            episode += 1
 
     stats = []
 
@@ -544,17 +533,7 @@ if __name__ == '__main__':
 
         # Train
 
-        time_limit = 300
-
-        if os.path.exists('save_stat/' + agent_name + '_stat.csv'):
-            with open('save_stat/' + agent_name + '_stat.csv', 'r') as f:
-                read = csv.reader(f)
-
-                episode = int(float(next(reversed(list(read)))[0]))
-
-                print('Last episode:', episode)
-
-                episode += 1
+        time_limit = 500
 
         global_step = 0
 
@@ -652,37 +631,17 @@ if __name__ == '__main__':
 
                 acc_score /= (timestep // args.updatetime + 1)
 
-                if episode % 10 == 0:
-                    print('Ep %d:  Step %d Score %.2f Pmax %.2f'
-
-                          % (episode, timestep, score, pmax))
-
                 stats = [episode,  score, pmax, actor_loss, critic_loss, acc_score,timestep]
 
                 # log stats
 
-                with open('save_stat/' + agent_name + '_stat.csv', 'a', encoding='utf-8', newline='') as f:
+                if timestep > 5:
 
-                    wr = csv.writer(f)
+                    with open('save_stat/' + agent_name + '_stat.csv', 'a', encoding='utf-8', newline='') as f:
 
-                    wr.writerow(['%.4f' % s if type(s) is float else s for s in stats])
-
-                if np.max(score) < bestS:
-                    highscore = bestS
-
-                else:
-                    bestS = np.max(score)
-                    highscore = bestS
-
-                    with open('save_stat/' + agent_name + '_highscore.csv', 'w', encoding='utf-8', newline='') as f:
                         wr = csv.writer(f)
 
-                        wr.writerow('%.4f' % s if type(s) is float else s for s in
-                                    [highscore, episode, score])
-
-                    agent.save_model('./save_model/' + agent_name + '_best')
-
-                agent.save_model('./save_model/' + agent_name)
+                        wr.writerow(['%.4f' % s if type(s) is float else s for s in stats])
 
                 episode += 1
 
