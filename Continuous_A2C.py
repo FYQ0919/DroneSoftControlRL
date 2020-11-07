@@ -35,7 +35,7 @@ class A2CAgent(object):
 
     def __init__(self, state_size, action_size, actor_lr, critic_lr,
 
-                 gamma, lambd, entropy, updatetime, load_model):
+                 gamma, lambd, updatetime, load_model):
 
         self.actor_lr = actor_lr
 
@@ -54,8 +54,6 @@ class A2CAgent(object):
         self.gamma = gamma
 
         self.lambd = lambd
-
-        self.entropy = entropy
 
         self.actor, self.critic = self.build_model()
 
@@ -126,9 +124,19 @@ class A2CAgent(object):
 
         policy = keras.layers.BatchNormalization()(policy)
 
-        policy = ELU()(policy)
+        policy = keras.layers.PReLU()(policy)
 
-        policy = Dense(64, use_bias=False)(policy)
+        policy = Dense(32, use_bias=False)(policy)
+
+        policy = keras.layers.PReLU()(policy)
+
+        policy = keras.layers.BatchNormalization()(policy)
+
+        policy = Dense(32, use_bias=False)(policy)
+
+        policy = keras.layers.PReLU()(policy)
+
+        policy = keras.layers.Dropout(rate=0.2)(policy)
 
         policy = keras.layers.BatchNormalization()(policy)
 
@@ -212,23 +220,35 @@ class A2CAgent(object):
 
     def get_action(self, state):
 
-        forward_factor = 0.5
+        epsilon = 0.9
 
-        policy = self.actor.predict(state)[0]
+        if np.random.uniform(0,1) < epsilon:
 
-        action = np.clip(policy , self.action_low, self.action_high)
+            forward_factor = 0.5
 
-        action[0] = action[0] + forward_factor
+            policy = self.actor.predict(state)[0]
 
-        action[2] -= 0.5
+            action = np.clip(policy, self.action_low, self.action_high)
 
-        action_noise = np.random.uniform(-0.2,0.2,1)
+            action[0] = action[0] + forward_factor
 
-        d = np.random.randint(0,2)
+            action_noise = np.random.uniform(-0.2, 0.2, 1)
 
-        action[d] += action_noise
+            d = np.random.randint(0, 2)
 
-        action = np.round(action,1)
+            action[d] += action_noise
+
+            action = tuple(action * 1.5)
+
+        else :
+
+            x,y,z = np.random.uniform(-2,2,3)
+
+            action = tuple([x,y,z])
+
+            policy = self.actor.predict(state)[0]
+
+            print("explore!!!")
 
         return action, policy
 
@@ -352,10 +372,6 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('--load_model', action='store_true')
-
-    parser.add_argument('--test', action='store_true')
-
     parser.add_argument('--img_height', type=int, default=72)
 
     parser.add_argument('--img_width', type=int, default=128)
@@ -367,8 +383,6 @@ if __name__ == '__main__':
     parser.add_argument('--gamma', type=float, default=0.99)
 
     parser.add_argument('--lambd', type=float, default=0.96)
-
-    parser.add_argument('--entropy', type=float, default=1e-3)
 
     parser.add_argument('--updatetime', type=int, default=12)
 
@@ -404,11 +418,9 @@ if __name__ == '__main__':
 
         lambd=args.lambd,
 
-        entropy=args.entropy,
-
         updatetime=args.updatetime,
 
-        load_model=args.load_model,
+        load_model=True,
 
     )
 
@@ -432,255 +444,149 @@ if __name__ == '__main__':
 
     env = windENV()
 
-    if args.test:
+    # Train
 
-        while True:
+    time_limit = 300
 
-            try:
+    if os.path.exists('save_stat_con/' + agent_name + '_stat.csv'):
+        with open('save_stat_con/' + agent_name + '_stat.csv', 'r') as f:
+            read = csv.reader(f)
 
-                done = False
+            episode = int(float(next(reversed(list(read)))[0]))
 
-                bug = False
+            print('Last episode:', episode)
 
-                # stats
+            episode += 1
 
-                timestep, score, pmax = 0, 0., 0.
+    global_step = 0
 
-                observe = env.reset()
+    while True:
 
-                image, acc = observe
+        try:
 
-                try:
+            done = False
 
-                    image = transform_input(image, args.img_height, args.img_width)
+            bug = False
 
-                except:
-                    print('False Done')
-                    continue
+            # stats
 
-                history = np.stack([image] * args.seqsize, axis=1)
+            bestS, timestep, score, pmax, acc_score = 0., 0, 0., 0., 0.
 
-                acc = acc.reshape(1, -1)
+            t, actor_loss, critic_loss = 0, 0., 0.
 
-                state = [history, acc]
+            observe = env.reset()
 
-                while not done:
+            image, acc = observe
 
-                    timestep += 1
+            image = transform_input(image, args.img_height, args.img_width)
 
-                    action, policy = agent.get_action(state)
+            history = np.stack([image] * args.seqsize, axis=1)
 
-                    observe, reward, done, bias = env.step(action, bias)
+            acc = acc.reshape(1, -1)
 
-                    image, acc = observe
+            state = [history, acc]
 
-                    try:
+            while not done and timestep < time_limit:
 
-                        image = transform_input(image, args.img_height, args.img_width)
+                t += 1
 
-                    except:
+                timestep += 1
 
-                        bug = True
+                global_step += 1
 
-                        print(f'bug = {bug}')
+                if global_step >= args.target_rate:
+                    agent.update_target_model()
 
-                        break
+                    global_step = 0
 
-                    history = np.append(history[:, 1:], [image], axis=1)
+                action, policy = agent.get_action(state)
 
-                    acc = acc.reshape(1, -1)
+                print(f'real action is {action}')
 
-                    next_state = [history, acc]
-
-                    # stats
-
-                    pmax += float(np.amax(policy))
-
-                    score += reward
-
-                    state = next_state
-
-                if bug:
-                    continue
-
-                pmax /= timestep
-
-                # done
-
-                print('Ep %d:  Step %d Score %.2f Pmax %.2f'
-
-                      % (episode, timestep, score, pmax))
-
-                episode += 1
-
-            except KeyboardInterrupt:
-
-                env.disconnect()
-
-                break
-
-    else:
-
-        # Train
-
-        time_limit = 300
-
-        if os.path.exists('save_stat_con/' + agent_name + '_stat.csv'):
-            with open('save_stat_con/' + agent_name + '_stat.csv', 'r') as f:
-                read = csv.reader(f)
-
-                episode = int(float(next(reversed(list(read)))[0]))
-
-                print('Last episode:', episode)
-
-                episode += 1
-
-        global_step = 0
-
-        while True:
-
-            try:
-
-                done = False
-
-                bug = False
-
-                # stats
-
-                bestS, timestep, score, pmax, acc_score = 0., 0, 0., 0., 0.
-
-                t, actor_loss, critic_loss = 0, 0., 0.
-
-                observe = env.reset()
+                observe, reward, done, bias = env.step(action, bias)
 
                 image, acc = observe
 
                 image = transform_input(image, args.img_height, args.img_width)
 
-                history = np.stack([image] * args.seqsize, axis=1)
+                history = np.append(history[:, 1:], [image], axis=1)
 
                 acc = acc.reshape(1, -1)
 
-                state = [history, acc]
+                acc_s = np.linalg.norm(acc)
 
-                while not done and timestep < time_limit:
+                next_state = [history, acc]
 
-                    t += 1
+                agent.append_sample(state, action, reward)
 
-                    timestep += 1
+                # stats
 
-                    global_step += 1
+                score += reward
 
-                    if global_step >= args.target_rate:
-                        agent.update_target_model()
+                acc_score += acc_s
 
-                        global_step = 0
+                pmax += float(np.amax(policy))
 
-                    action, policy = agent.get_action(state)
+                if t >= args.updatetime or done:
 
-                    print(f'real action is {action}')
+                    t = 0
 
-                    observe, reward, done, bias = env.step(action, bias)
+                    a_loss, c_loss = agent.train_model(next_state, done)
 
-                    image, acc = observe
+                    actor_loss += float(a_loss)
 
-                    image = transform_input(image, args.img_height, args.img_width)
+                    critic_loss += float(c_loss)
 
-                    history = np.append(history[:, 1:], [image], axis=1)
+                state = next_state
 
-                    acc = acc.reshape(1, -1)
+            if bug:
+                continue
 
-                    acc_s = np.linalg.norm(acc)
+            # done
 
-                    next_state = [history, acc]
+            pmax /= timestep
 
-                    agent.append_sample(state, action, reward)
+            actor_loss /= (timestep // args.updatetime + 1)
 
-                    # stats
+            critic_loss /= (timestep // args.updatetime + 1)
 
-                    score += reward
+            acc_score /= (timestep // args.updatetime + 1)
 
-                    acc_score += acc_s
+            if episode % 10 == 0:
+                print('Ep %d:  Step %d Score %.2f Pmax %.2f'
 
-                    pmax += float(np.amax(policy))
+                      % (episode, timestep, score, pmax))
 
-                    if t >= args.updatetime or done:
+            stats = [episode,  score, pmax, actor_loss, critic_loss, acc_score,timestep]
 
-                        t = 0
+            # log stats
 
-                        a_loss, c_loss = agent.train_model(next_state, done)
+            with open('save_stat_con/' + agent_name + '_stat.csv', 'a', encoding='utf-8', newline='') as f:
 
-                        actor_loss += float(a_loss)
+                wr = csv.writer(f)
 
-                        critic_loss += float(c_loss)
+                wr.writerow(['%.4f' % s if type(s) is float else s for s in stats])
 
-                    state = next_state
+            episode += 1
 
-                if bug:
-                    continue
+            print(episode)
 
-                # done
+            # tf.summary.scalar("score", score, step=episode)
+            #
+            # tf.summary.scalar("reward", reward, step=global_step)
+            #
+            # tf.summary.scalar("actor_loss", actor_loss, step=episode)
+            #
+            # tf.summary.scalar("critic_loss", critic_loss, step=episode)
+            #
+            # tf.summary.scalar("c_loss", c_loss, step=global_step)
+            #
+            # tf.summary.scalar("a_loss", a_loss, step=global_step)
+            #
+            # tf.summary.scalar("policy", pmax, step=episode)
 
-                pmax /= timestep
+        except KeyboardInterrupt:
 
-                actor_loss /= (timestep // args.updatetime + 1)
+            env.disconnect()
 
-                critic_loss /= (timestep // args.updatetime + 1)
-
-                acc_score /= (timestep // args.updatetime + 1)
-
-                if episode % 10 == 0:
-                    print('Ep %d:  Step %d Score %.2f Pmax %.2f'
-
-                          % (episode, timestep, score, pmax))
-
-                stats = [episode,  score, pmax, actor_loss, critic_loss, acc_score,timestep]
-
-                # log stats
-
-                with open('save_stat_con/' + agent_name + '_stat.csv', 'a', encoding='utf-8', newline='') as f:
-
-                    wr = csv.writer(f)
-
-                    wr.writerow(['%.4f' % s if type(s) is float else s for s in stats])
-
-                if np.max(score) < bestS:
-                    highscore = bestS
-
-                else:
-                    bestS = np.max(score)
-                    highscore = bestS
-
-                    with open('save_stat_con/' + agent_name + '_highscore.csv', 'w', encoding='utf-8', newline='') as f:
-                        wr = csv.writer(f)
-
-                        wr.writerow('%.4f' % s if type(s) is float else s for s in
-                                    [highscore, episode, score])
-
-                    agent.save_model('./save_model_con/' + agent_name + '_best')
-
-                agent.save_model('./save_model_con/' + agent_name)
-
-                episode += 1
-
-                print(episode)
-
-                # tf.summary.scalar("score", score, step=episode)
-                #
-                # tf.summary.scalar("reward", reward, step=global_step)
-                #
-                # tf.summary.scalar("actor_loss", actor_loss, step=episode)
-                #
-                # tf.summary.scalar("critic_loss", critic_loss, step=episode)
-                #
-                # tf.summary.scalar("c_loss", c_loss, step=global_step)
-                #
-                # tf.summary.scalar("a_loss", a_loss, step=global_step)
-                #
-                # tf.summary.scalar("policy", pmax, step=episode)
-
-            except KeyboardInterrupt:
-
-                env.disconnect()
-
-                break
+            break

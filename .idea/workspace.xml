@@ -17,7 +17,6 @@
       <change beforePath="$PROJECT_DIR$/Model_Based_ENV.py" beforeDir="false" afterPath="$PROJECT_DIR$/Model_Based_ENV.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Model_based_A2C.py" beforeDir="false" afterPath="$PROJECT_DIR$/Model_based_A2C.py" afterDir="false" />
     </list>
-    <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -42,22 +41,11 @@
     <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
     <property name="WebServerToolWindowFactoryState" value="false" />
+    <property name="com.intellij.ide.scratch.LRUPopupBuilder$1/New Scratch File" value="Python" />
     <property name="last_opened_file_path" value="$PROJECT_DIR$" />
     <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
   </component>
-  <component name="RunDashboard">
-    <option name="ruleStates">
-      <list>
-        <RuleState>
-          <option name="name" value="ConfigurationTypeDashboardGroupingRule" />
-        </RuleState>
-        <RuleState>
-          <option name="name" value="StatusDashboardGroupingRule" />
-        </RuleState>
-      </list>
-    </option>
-  </component>
-  <component name="RunManager" selected="Python.Model_based_A2C">
+  <component name="RunManager" selected="Python.Continuous_A2C">
     <configuration name="Continuous_A2C" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="RL_Part2" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -146,7 +134,7 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="pos" type="PythonConfigurationType" factoryName="Python" temporary="true">
+    <configuration name="plot" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="RL_Part2" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -158,8 +146,7 @@
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
-      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/pos.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/plot.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -170,15 +157,15 @@
     </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="Python.Model_based_A2C" />
         <item itemvalue="Python.Continuous_A2C" />
+        <item itemvalue="Python.plot" />
+        <item itemvalue="Python.Model_based_A2C" />
         <item itemvalue="Python.Continuous_a2c_env" />
         <item itemvalue="Python.a2c" />
-        <item itemvalue="Python.pos" />
       </list>
     </recent_temporary>
   </component>
-  <component name="SpellCheckerSettings" BundledDictionaries="0" Folders="0" CustomDictionaries="0" Dictionaries="0" CorrectionsLimit="5" DefaultDictionary="application-level" UseSingleDictionary="true" />
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="SvnConfiguration">
     <configuration />
   </component>
@@ -212,76 +199,75 @@
       <map>
         <entry key="MAIN">
           <value>
-            <State>
-              <option name="COLUMN_ORDER" />
-            </State>
+            <State />
           </value>
         </entry>
       </map>
     </option>
+    <option name="oldMeFiltersMigrated" value="true" />
   </component>
   <component name="WindowStateProjectService">
     <state x="378" y="0" key="#Model_based_A2C" timestamp="1604381381351">
       <screen x="0" y="0" width="1280" height="760" />
     </state>
     <state x="378" y="0" key="#Model_based_A2C/0.0.1280.760@0.0.1280.760" timestamp="1604381381351" />
-    <state x="632" y="185" key="FileChooserDialogImpl" timestamp="1604285753860">
+    <state x="632" y="185" key="FileChooserDialogImpl" timestamp="1604727134170">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
     <state x="421" y="135" key="FileChooserDialogImpl/0.0.1280.760/2560.0.2560.1400@0.0.1280.760" timestamp="1604235438128" />
     <state x="421" y="135" key="FileChooserDialogImpl/0.0.1280.760@0.0.1280.760" timestamp="1604038208470" />
-    <state x="632" y="185" key="FileChooserDialogImpl/0.0.1920.1040@0.0.1920.1040" timestamp="1604285753860" />
-    <state width="1899" height="282" key="GridCell.Tab.0.bottom" timestamp="1604551362698">
+    <state x="632" y="185" key="FileChooserDialogImpl/0.0.1920.1040@0.0.1920.1040" timestamp="1604727134170" />
+    <state width="1899" height="348" key="GridCell.Tab.0.bottom" timestamp="1604741304927">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
     <state width="1238" height="399" key="GridCell.Tab.0.bottom/0.0.1280.760/2560.0.2560.1400@0.0.1280.760" timestamp="1604252672192" />
     <state width="2517" height="399" key="GridCell.Tab.0.bottom/0.0.1280.760/2560.0.2560.1400@2560.0.2560.1400" timestamp="1604247986400" />
     <state width="1238" height="329" key="GridCell.Tab.0.bottom/0.0.1280.760@0.0.1280.760" timestamp="1604385703830" />
-    <state width="1899" height="282" key="GridCell.Tab.0.bottom/0.0.1920.1040@0.0.1920.1040" timestamp="1604551362698" />
-    <state width="1899" height="282" key="GridCell.Tab.0.center" timestamp="1604551362698">
+    <state width="1899" height="348" key="GridCell.Tab.0.bottom/0.0.1920.1040@0.0.1920.1040" timestamp="1604741304927" />
+    <state width="1899" height="348" key="GridCell.Tab.0.center" timestamp="1604741304927">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
     <state width="1238" height="399" key="GridCell.Tab.0.center/0.0.1280.760/2560.0.2560.1400@0.0.1280.760" timestamp="1604252672192" />
     <state width="2517" height="399" key="GridCell.Tab.0.center/0.0.1280.760/2560.0.2560.1400@2560.0.2560.1400" timestamp="1604247986400" />
     <state width="1238" height="329" key="GridCell.Tab.0.center/0.0.1280.760@0.0.1280.760" timestamp="1604385703830" />
-    <state width="1899" height="282" key="GridCell.Tab.0.center/0.0.1920.1040@0.0.1920.1040" timestamp="1604551362698" />
-    <state width="1899" height="282" key="GridCell.Tab.0.left" timestamp="1604551362698">
+    <state width="1899" height="348" key="GridCell.Tab.0.center/0.0.1920.1040@0.0.1920.1040" timestamp="1604741304927" />
+    <state width="1899" height="348" key="GridCell.Tab.0.left" timestamp="1604741304927">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
     <state width="1238" height="399" key="GridCell.Tab.0.left/0.0.1280.760/2560.0.2560.1400@0.0.1280.760" timestamp="1604252672192" />
     <state width="2517" height="399" key="GridCell.Tab.0.left/0.0.1280.760/2560.0.2560.1400@2560.0.2560.1400" timestamp="1604247986400" />
     <state width="1238" height="329" key="GridCell.Tab.0.left/0.0.1280.760@0.0.1280.760" timestamp="1604385703830" />
-    <state width="1899" height="282" key="GridCell.Tab.0.left/0.0.1920.1040@0.0.1920.1040" timestamp="1604551362698" />
-    <state width="1899" height="282" key="GridCell.Tab.0.right" timestamp="1604551362698">
+    <state width="1899" height="348" key="GridCell.Tab.0.left/0.0.1920.1040@0.0.1920.1040" timestamp="1604741304927" />
+    <state width="1899" height="348" key="GridCell.Tab.0.right" timestamp="1604741304927">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
     <state width="1238" height="399" key="GridCell.Tab.0.right/0.0.1280.760/2560.0.2560.1400@0.0.1280.760" timestamp="1604252672192" />
     <state width="2517" height="399" key="GridCell.Tab.0.right/0.0.1280.760/2560.0.2560.1400@2560.0.2560.1400" timestamp="1604247986400" />
     <state width="1238" height="329" key="GridCell.Tab.0.right/0.0.1280.760@0.0.1280.760" timestamp="1604385703830" />
-    <state width="1899" height="282" key="GridCell.Tab.0.right/0.0.1920.1040@0.0.1920.1040" timestamp="1604551362698" />
-    <state width="1899" height="348" key="GridCell.Tab.1.bottom" timestamp="1604551309737">
+    <state width="1899" height="348" key="GridCell.Tab.0.right/0.0.1920.1040@0.0.1920.1040" timestamp="1604741304927" />
+    <state width="1899" height="348" key="GridCell.Tab.1.bottom" timestamp="1604741304927">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state width="1899" height="348" key="GridCell.Tab.1.bottom/0.0.1920.1040@0.0.1920.1040" timestamp="1604551309737" />
-    <state width="1899" height="348" key="GridCell.Tab.1.center" timestamp="1604551309737">
+    <state width="1899" height="348" key="GridCell.Tab.1.bottom/0.0.1920.1040@0.0.1920.1040" timestamp="1604741304927" />
+    <state width="1899" height="348" key="GridCell.Tab.1.center" timestamp="1604741304927">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state width="1899" height="348" key="GridCell.Tab.1.center/0.0.1920.1040@0.0.1920.1040" timestamp="1604551309737" />
-    <state width="1899" height="348" key="GridCell.Tab.1.left" timestamp="1604551309737">
+    <state width="1899" height="348" key="GridCell.Tab.1.center/0.0.1920.1040@0.0.1920.1040" timestamp="1604741304927" />
+    <state width="1899" height="348" key="GridCell.Tab.1.left" timestamp="1604741304927">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state width="1899" height="348" key="GridCell.Tab.1.left/0.0.1920.1040@0.0.1920.1040" timestamp="1604551309737" />
-    <state width="1899" height="348" key="GridCell.Tab.1.right" timestamp="1604551309737">
+    <state width="1899" height="348" key="GridCell.Tab.1.left/0.0.1920.1040@0.0.1920.1040" timestamp="1604741304927" />
+    <state width="1899" height="348" key="GridCell.Tab.1.right" timestamp="1604741304927">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state width="1899" height="348" key="GridCell.Tab.1.right/0.0.1920.1040@0.0.1920.1040" timestamp="1604551309737" />
-    <state x="461" y="165" key="SettingsEditor" timestamp="1604385775360">
+    <state width="1899" height="348" key="GridCell.Tab.1.right/0.0.1920.1040@0.0.1920.1040" timestamp="1604741304927" />
+    <state x="461" y="165" key="SettingsEditor" timestamp="1604727018595">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
     <state x="286" y="50" key="SettingsEditor/0.0.1280.760/2560.0.2560.1400@0.0.1280.760" timestamp="1604237345303" />
     <state x="3132" y="92" key="SettingsEditor/0.0.1280.760/2560.0.2560.1400@2560.0.2560.1400" timestamp="1604242053766" />
     <state x="286" y="50" key="SettingsEditor/0.0.1280.760@0.0.1280.760" timestamp="1604381400295" />
-    <state x="461" y="165" key="SettingsEditor/0.0.1920.1040@0.0.1920.1040" timestamp="1604385775360" />
+    <state x="461" y="165" key="SettingsEditor/0.0.1920.1040@0.0.1920.1040" timestamp="1604727018595" />
     <state x="3503" y="315" width="672" height="678" key="search.everywhere.popup" timestamp="1604241538811">
       <screen x="2560" y="0" width="2560" height="1400" />
     </state>
@@ -292,7 +278,7 @@
       <breakpoints>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/Continuous_A2C.py</url>
-          <line>124</line>
+          <line>146</line>
           <option name="timeStamp" value="2" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
@@ -300,11 +286,12 @@
           <line>61</line>
           <option name="timeStamp" value="3" />
         </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/Continuous_A2C.py</url>
+          <line>244</line>
+          <option name="timeStamp" value="4" />
+        </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
-  </component>
-  <component name="com.intellij.coverage.CoverageDataManagerImpl">
-    <SUITE FILE_PATH="coverage/Continuous_A2C_py$Continuous_A2C.coverage" NAME="Continuous_A2C Coverage Results" MODIFIED="1604640311032" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/Continuous_A2C_py$Model_based_A2C.coverage" NAME="Model_based_A2C Coverage Results" MODIFIED="1604725355934" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
 </project>

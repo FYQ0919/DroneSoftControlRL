@@ -18,8 +18,7 @@ class windENV():
         self.cl = airsim.MultirotorClient()
         self.cl.confirmConnection()
         self.action_size = 3
-        self.duration = 0.5
-
+        self.duration = 0.3
 
     def reset(self):
         self.cl.reset()
@@ -83,7 +82,7 @@ class windENV():
         pos = np.array([pos.x_val, pos.y_val, pos.z_val], dtype=np.float)
         print(f'position is {pos}')
         new_bias = pos - object_pos
-        success = np.linalg.norm(bias) < 1
+        success = np.linalg.norm(bias) < 2
         done = stop or success
         if stop:
             print('state = stop')
@@ -108,9 +107,9 @@ class windENV():
             standard_dis = np.linalg.norm(object_pos)
             distance =  np.linalg.norm(bias)
             new_distance =  np.linalg.norm(new_bias)
-            weight_ar = 0.5
-            weight_dis = 0.25
-            weight_vr = 0.5
+            weight_ar = 1.0
+            weight_dis = 0.6
+            weight_vr = 0.2
 
             if stop:
                 reward = -50
