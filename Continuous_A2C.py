@@ -31,6 +31,27 @@ from Continuous_a2c_env import windENV, object_pos
 
 
 
+def img_pre(responses, img_height, img_width):
+
+    img1d = np.array(responses[0].image_data_float, dtype=np.float)
+
+    img1d = np.array(np.clip(255 * 3 * img1d, 0, 255), dtype=np.uint8)
+
+    img2d = np.reshape(img1d, (responses[0].height, responses[0].width))
+
+    image = Image.fromarray(img2d)
+
+    image = np.array(image.resize((img_width, img_height)).convert('L'))
+
+    cv2.imwrite('input.png',image)
+
+    image = np.float32(image.reshape(1, img_height, img_width, 1))
+
+    image /= 255.0
+
+    return image
+
+
 class A2CAgent(object):
 
     def __init__(self, state_size, action_size, actor_lr, critic_lr,
@@ -59,9 +80,7 @@ class A2CAgent(object):
 
         _, self.critic2 = self.build_model()
 
-        self.actor_update = self.build_actor_optimizer()
-
-        self.critic_update = self.build_critic_optimizer()
+        self.actor_op,self.critic_op = self.build_actor_optimizer(),self.build_critic_optimizer()
 
         self.updatetime = updatetime
 
@@ -81,11 +100,11 @@ class A2CAgent(object):
 
         layer1 = keras.layers.BatchNormalization()(x1)
 
-        layer2 = keras.layers.TimeDistributed(Conv2D(64, (8, 8), activation='relu', padding='valid'))(layer1)
+        layer2 = keras.layers.TimeDistributed(Conv2D(8, (8, 8), activation='relu', padding='valid'))(layer1)
 
         layer3 = keras.layers.TimeDistributed(MaxPooling2D((2, 2)))(layer2)
 
-        layer4 = keras.layers.TimeDistributed(Conv2D(64, (5, 5), activation='relu'))(layer3)
+        layer4 = keras.layers.TimeDistributed(Conv2D(16, (5, 5), activation='relu'))(layer3)
 
         layer5 = keras.layers.TimeDistributed(MaxPooling2D((2, 2)))(layer4)
 
@@ -120,23 +139,15 @@ class A2CAgent(object):
 
         # Actor
 
-        policy = Dense(16, use_bias=False)(state_process)
+        policy = Dense(8, use_bias=False)(state_process)
 
         policy = keras.layers.BatchNormalization()(policy)
 
         policy = keras.layers.PReLU()(policy)
 
-        policy = Dense(32, use_bias=False)(policy)
+        policy = Dense(16, use_bias=False)(policy)
 
         policy = keras.layers.PReLU()(policy)
-
-        policy = keras.layers.BatchNormalization()(policy)
-
-        policy = Dense(32, use_bias=False)(policy)
-
-        policy = keras.layers.PReLU()(policy)
-
-        policy = keras.layers.Dropout(rate=0.2)(policy)
 
         policy = keras.layers.BatchNormalization()(policy)
 
@@ -218,11 +229,11 @@ class A2CAgent(object):
 
         return train
 
-    def get_action(self, state):
+    def get_action(self, state, episode):
 
-        epsilon = 0.9
+        epsilon = 0.01+0.99*np.exp(-0.01*episode)
 
-        if np.random.uniform(0,1) < epsilon:
+        if np.random.uniform(0,1) > epsilon:
 
             forward_factor = 0.5
 
@@ -241,15 +252,24 @@ class A2CAgent(object):
             action = tuple(action * 1.5)
 
         else :
+         if np.random.uniform(0,1) < 0.5:
 
-            x,y,z = np.random.uniform(-2,2,3)
+            x,z = object_pos[0]/10,object_pos[2]/10
 
-            action = tuple([x,y,z])
+            action = tuple([x,0,z])
 
             policy = self.actor.predict(state)[0]
 
-            print("explore!!!")
+            print("imitation!!!")
+         else:
 
+             x, y, z = np.random.uniform(-2,2,3)
+
+             action = tuple([x, y, z])
+
+             policy = self.actor.predict(state)[0]
+
+             print("explore!!!")
         return action, policy
 
     def train_model(self, next_state, done):
@@ -292,9 +312,9 @@ class A2CAgent(object):
 
         states = [images[:-1], accs[:-1]]
 
-        actor_loss = self.actor_update(states + [self.actions, advantage])
+        actor_loss = self.actor_op(states + [policy,advantage])
 
-        critic_loss = self.critic_update(states + [target_val])
+        critic_loss = self.critic_op(states + [target_val])
 
         self.clear_sample()
 
@@ -339,30 +359,6 @@ class A2CAgent(object):
         self.critic.save_weights(name + 'con_critic.h5')
 
 
-'''
-
-Environment interaction
-
-'''
-
-
-def transform_input(responses, img_height, img_width):
-
-    img1d = np.array(responses[0].image_data_float, dtype=np.float)
-
-    img1d = np.array(np.clip(255 * 3 * img1d, 0, 255), dtype=np.uint8)
-
-    img2d = np.reshape(img1d, (responses[0].height, responses[0].width))
-
-    image = Image.fromarray(img2d)
-
-    image = np.array(image.resize((img_width, img_height)).convert('L'))
-
-    image = np.float32(image.reshape(1, img_height, img_width, 1))
-
-    image /= 255.0
-
-    return image
 
 
 
@@ -376,13 +372,13 @@ if __name__ == '__main__':
 
     parser.add_argument('--img_width', type=int, default=128)
 
-    parser.add_argument('--actor_lr', type=float, default=5e-4)
+    parser.add_argument('--actor_lr', type=float, default=1e-4)
 
-    parser.add_argument('--critic_lr', type=float, default=5e-4)
+    parser.add_argument('--critic_lr', type=float, default=1e-4)
 
-    parser.add_argument('--gamma', type=float, default=0.99)
+    parser.add_argument('--gamma', type=float, default=1.0)
 
-    parser.add_argument('--lambd', type=float, default=0.96)
+    parser.add_argument('--lambd', type=float, default=0.99)
 
     parser.add_argument('--updatetime', type=int, default=12)
 
@@ -430,23 +426,9 @@ if __name__ == '__main__':
 
     bias = np.linalg.norm(object_pos)
 
-    if os.path.exists('save_stat_con/' + agent_name + '_stat.csv'):
-        with open('save_stat_con/' + agent_name + '_stat.csv', 'r') as f:
-            read = csv.reader(f)
-
-            episode = int(float(next(reversed(list(read)))[0]))
-
-            print('Last episode:', episode)
-
-            episode += 1
-
-    stats = []
-
     env = windENV()
 
-    # Train
-
-    time_limit = 300
+    time_limit = 500
 
     if os.path.exists('save_stat_con/' + agent_name + '_stat.csv'):
         with open('save_stat_con/' + agent_name + '_stat.csv', 'r') as f:
@@ -478,13 +460,13 @@ if __name__ == '__main__':
 
             image, acc = observe
 
-            image = transform_input(image, args.img_height, args.img_width)
+            image = img_pre(image, args.img_height, args.img_width)
 
-            history = np.stack([image] * args.seqsize, axis=1)
+            RePlay = np.stack([image] * args.seqsize, axis=1)
 
             acc = acc.reshape(1, -1)
 
-            state = [history, acc]
+            state = [RePlay, acc]
 
             while not done and timestep < time_limit:
 
@@ -499,7 +481,7 @@ if __name__ == '__main__':
 
                     global_step = 0
 
-                action, policy = agent.get_action(state)
+                action, policy = agent.get_action(state,episode)
 
                 print(f'real action is {action}')
 
@@ -507,15 +489,15 @@ if __name__ == '__main__':
 
                 image, acc = observe
 
-                image = transform_input(image, args.img_height, args.img_width)
+                image = img_pre(image, args.img_height, args.img_width)
 
-                history = np.append(history[:, 1:], [image], axis=1)
+                RePlay = np.append(RePlay[:, 1:], [image], axis=1)
 
                 acc = acc.reshape(1, -1)
 
                 acc_s = np.linalg.norm(acc)
 
-                next_state = [history, acc]
+                next_state = [RePlay, acc]
 
                 agent.append_sample(state, action, reward)
 
@@ -567,7 +549,15 @@ if __name__ == '__main__':
 
                 wr.writerow(['%.4f' % s if type(s) is float else s for s in stats])
 
-            episode += 1
+            if np.max(score) < bestS:
+                highscore = bestS
+
+            else:
+                bestS = np.max(score)
+                highscore = bestS
+                agent.save_model('./save_model_con/' + agent_name + '_best')
+
+            agent.save_model('./save_model_con/' + agent_name)
 
             print(episode)
 

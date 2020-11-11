@@ -1,7 +1,7 @@
 # Author: Fu Yangqing
 # NUS ID: A0225413R
 # Description:
-# Use A2C algorithm to train quadrotor to do soft motion (Discrete action space)
+# Use A2C algorithm to train quadrotor to do compliance motion (Discrete action space)
 # Update time:2020/10/30
 
 
@@ -76,11 +76,11 @@ class A2CAgent(object):
 
         layer1 = keras.layers.BatchNormalization()(x1)
 
-        layer2 = keras.layers.TimeDistributed(Conv2D(64, (8, 8), activation='relu', padding='valid'))(layer1)
+        layer2 = keras.layers.TimeDistributed(Conv2D(8, (8, 8), activation='relu', padding='valid'))(layer1)
 
         layer3 = keras.layers.TimeDistributed(MaxPooling2D((2, 2)))(layer2)
 
-        layer4 = keras.layers.TimeDistributed(Conv2D(64, (5, 5), activation='relu'))(layer3)
+        layer4 = keras.layers.TimeDistributed(Conv2D(16, (5, 5), activation='relu'))(layer3)
 
         layer5 = keras.layers.TimeDistributed(MaxPooling2D((2, 2)))(layer4)
 
@@ -642,6 +642,16 @@ if __name__ == '__main__':
                         wr = csv.writer(f)
 
                         wr.writerow(['%.4f' % s if type(s) is float else s for s in stats])
+
+                if np.max(score) < bestS:
+                    highscore = bestS
+
+                else:
+                    bestS = np.max(score)
+                    highscore = bestS
+                    agent.save_model('./save_model_con/' + agent_name + '_best')
+
+                agent.save_model('./save_model_con/' + agent_name)
 
                 episode += 1
 

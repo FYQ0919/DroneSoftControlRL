@@ -1,9 +1,10 @@
 import time
 import numpy as np
 import airsim
+import cv2
 
 #define destination
-object_pos = [13,0,1]
+object_pos = [15,0,1]
 #define boundary
 outZ = [-5, 2]
 outY = [-5,5]

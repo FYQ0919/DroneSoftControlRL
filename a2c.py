@@ -28,7 +28,7 @@ import os
 
 from Wind_env import windENV,Action_Space
 
-agent_name = 'a2c'
+agent_name = 'a2c_model_free'
 
 
 class A2CAgent(object):
@@ -343,7 +343,7 @@ def transform_input(responses, img_height, img_width):
 def interpret_action(action):
     scaling_factor = 0.5
 
-    basic_speed = 1.5
+    basic_speed = 1.0
 
     if action == 0:
 
@@ -428,11 +428,8 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    if not os.path.exists('save_graph/' + agent_name):
-        os.makedirs('save_graph/' + agent_name)
-
-    if not os.path.exists('save_stat'):
-        os.makedirs('save_stat')
+    if not os.path.exists('save_stat_model_free'):
+        os.makedirs('save_stat_model_free')
 
     if not os.path.exists('save_model'):
         os.makedirs('save_model')
@@ -726,29 +723,29 @@ if __name__ == '__main__':
                 ]
 
                 # log stats
-
-                with open('save_state/' + agent_name + '_state.csv', 'a', encoding='utf-8', newline='') as f:
-
-                    wr = csv.writer(f)
-
-                    wr.writerow(['%.4f' % s if type(s) is float else s for s in stats])
-
-                if np.max(score) < bestS:
-                    highscore = bestS
-
-                else:
-                    bestS = np.max(score)
-                    highscore = bestS
-
-                    with open('save_stat/' + agent_name + '_highscore.csv', 'w', encoding='utf-8', newline='') as f:
-                        wr = csv.writer(f)
-
-                        wr.writerow('%.4f' % s if type(s) is float else s for s in
-                                    [highscoreY, episode, score, dt.now().strftime('%Y-%m-%d %H:%M:%S')])
-
-                    agent.save_model('./save_model/' + agent_name + '_best')
-
-                agent.save_model('./save_model/' + agent_name)
+                #
+                # with open('save_state/' + agent_name + '_state.csv', 'a', encoding='utf-8', newline='') as f:
+                #
+                #     wr = csv.writer(f)
+                #
+                #     wr.writerow(['%.4f' % s if type(s) is float else s for s in stats])
+                #
+                # if np.max(score) < bestS:
+                #     highscore = bestS
+                #
+                # else:
+                #     bestS = np.max(score)
+                #     highscore = bestS
+                #
+                #     with open('save_stat/' + agent_name + '_highscore.csv', 'w', encoding='utf-8', newline='') as f:
+                #         wr = csv.writer(f)
+                #
+                #         wr.writerow('%.4f' % s if type(s) is float else s for s in
+                #                     [highscoreY, episode, score, dt.now().strftime('%Y-%m-%d %H:%M:%S')])
+                #
+                #     agent.save_model('./save_model/' + agent_name + '_best')
+                #
+                # agent.save_model('./save_model/' + agent_name)
 
                 episode += 1
 
