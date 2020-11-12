@@ -54,7 +54,7 @@ class TD3Agent(object):
         self.epsilon_decay = (epsilon - epsilon_end) / decay_step
 
         if play:
-            gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.7)
+            gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.3)
             self.sess = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
         else:
             self.sess = tf.Session()

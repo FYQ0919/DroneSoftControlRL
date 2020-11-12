@@ -724,11 +724,11 @@ if __name__ == '__main__':
 
                 # log stats
                 #
-                # with open('save_state/' + agent_name + '_state.csv', 'a', encoding='utf-8', newline='') as f:
-                #
-                #     wr = csv.writer(f)
-                #
-                #     wr.writerow(['%.4f' % s if type(s) is float else s for s in stats])
+                with open('save_stat/' + agent_name + '_state.csv', 'a', encoding='utf-8', newline='') as f:
+
+                    wr = csv.writer(f)
+
+                    wr.writerow(['%.4f' % s if type(s) is float else s for s in stats])
                 #
                 # if np.max(score) < bestS:
                 #     highscore = bestS

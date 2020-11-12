@@ -105,17 +105,17 @@ class A2CAgent(object):
 
         acc = Input(shape=[self.acc_size])
 
-        acc_process = Dense(12)(acc)
+        acc_process = Dense(32)(acc)
 
         acc_process = keras.layers.BatchNormalization()(acc_process)
 
         acc_process = keras.layers.Activation('sigmoid')(acc_process)
 
-        state_process = image_out
+        state_process = keras.layers.Add()([image_out,acc_process])
 
         # Actor
 
-        policy = Dense(128, kernel_initializer='he_normal', use_bias=False)(state_process)
+        policy = Dense(16, kernel_initializer='he_normal', use_bias=False)(state_process)
 
         policy = ELU()(policy)
 
@@ -128,7 +128,7 @@ class A2CAgent(object):
 
         # Critic
 
-        value = Dense(128, kernel_initializer='he_normal', use_bias=False)(state_process)
+        value = Dense(32, kernel_initializer='he_normal', use_bias=False)(state_process)
 
         value = ELU()(value)
 
@@ -154,15 +154,11 @@ class A2CAgent(object):
 
         action_prob = keras.backend.sum(action * policy, axis=1)
 
-        cross_entropy = keras.backend.log(action_prob + 1e-6) * advantages
+        log_prob_actions_v = keras.backend.log(action_prob + 1e-6) * advantages
 
-        cross_entropy = -keras.backend.mean(cross_entropy)
+        loss_p = -keras.backend.sum(log_prob_actions_v)
 
-        entropy = keras.backend.sum(policy * keras.backend.log(policy + 1e-6), axis=1)
-
-        entropy = keras.backend.mean(entropy)
-
-        loss = cross_entropy + self.entropy * entropy
+        loss = keras.backend.mean(loss_p)
 
         optimizer = Adam(lr=self.actor_lr)
 
@@ -176,6 +172,8 @@ class A2CAgent(object):
 
     def build_critic_optimizer(self):
 
+        policy = self.actor.output
+
         y = keras.backend.placeholder(shape=(None, 1))
 
         value = self.critic.output
@@ -188,7 +186,13 @@ class A2CAgent(object):
 
         linear = error - quadratic
 
-        loss = keras.backend.mean(0.5 * keras.backend.square(quadratic) + linear)
+        entropy = keras.backend.sum(policy * keras.backend.log(policy + 1e-6), axis=1)
+
+        entropy_loss = -self.entropy*entropy
+
+        value_loss = keras.backend.mean(0.5 * keras.backend.square(quadratic) + linear)
+
+        loss = value_loss + entropy_loss
 
         optimizer = Adam(lr=self.critic_lr)
 
@@ -254,9 +258,15 @@ class A2CAgent(object):
 
         critic_loss = self.critic_update(states + [target_val])
 
+        critic_loss = np.array(critic_loss[0])
+
+        critic_loss = critic_loss[0]
+
+        print(f'critic loss is {critic_loss}')
+
         self.clear_sample()
 
-        return actor_loss[0], critic_loss[0]
+        return actor_loss[0], critic_loss
 
     def append_sample(self, state, action, reward):
 
@@ -284,13 +294,13 @@ class A2CAgent(object):
 
     def load_model(self, name):
 
-        if os.path.exists(name + '_actor.h5'):
-            self.actor.load_weights(name + '_actor.h5')
+        if os.path.exists(name + '_best_actor.h5'):
+            self.actor.load_weights(name + '_best_actor.h5')
 
             print('Actor loaded')
 
-        if os.path.exists(name + '_critic.h5'):
-            self.critic.load_weights(name + '_critic.h5')
+        if os.path.exists(name + '_best_critic.h5'):
+            self.critic.load_weights(name + '_best_critic.h5')
 
             print('Critic loaded')
 
@@ -327,13 +337,13 @@ def transform_input(responses, img_height, img_width):
 
 
 def interpret_action(action):
-    scaling_factor = 1.
+    scaling_factor = 1.0
 
-    forward_factor = 0.3
+    forward_factor = 0.2
 
     if action == 0:
 
-        quad_offset = (0, 0, 0)
+        quad_offset = (scaling_factor + forward_factor,0 ,-scaling_factor)
 
     elif action == 1:
 
@@ -649,9 +659,9 @@ if __name__ == '__main__':
                 else:
                     bestS = np.max(score)
                     highscore = bestS
-                    agent.save_model('./save_model_con/' + agent_name + '_best')
+                    agent.save_model('./save_model/' + agent_name + '_best')
 
-                agent.save_model('./save_model_con/' + agent_name)
+                agent.save_model('./save_model/' + agent_name)
 
                 episode += 1
 

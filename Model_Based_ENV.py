@@ -17,7 +17,6 @@ class windENV():
         # Connect to the Airsim environment
         self.cl = airsim.MultirotorClient()
         self.cl.confirmConnection()
-        self.action_size = 3
         self.duration = 0.3
 
 
@@ -66,7 +65,7 @@ class windENV():
 
             if collided or slow:
                 collision_count += 1
-            if collision_count > 10:
+            if collision_count > 5:
                 has_collided = True
                 break
 
@@ -84,7 +83,7 @@ class windENV():
         pos = np.array([pos.x_val,pos.y_val,pos.z_val],dtype=np.float)
         print(f'position is {pos}')
         new_bias = pos - object_pos
-        success = np.linalg.norm(bias) < 2
+        success = np.linalg.norm(bias) < 3
         done = stop or success
         if stop:
             print('state = stop')
@@ -118,7 +117,7 @@ class windENV():
         if stop:
             reward = -50
         elif success:
-            reward = 500
+            reward = 100
         else:
             #define diiferent reward:
 
