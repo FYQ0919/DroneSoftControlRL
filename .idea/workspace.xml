@@ -42,7 +42,7 @@
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
     <property name="WebServerToolWindowFactoryState" value="false" />
     <property name="com.intellij.ide.scratch.LRUPopupBuilder$1/New Scratch File" value="Python" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/save_stat" />
+    <property name="last_opened_file_path" value="$USER_HOME$/Desktop/DroneSoftControlRL" />
     <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
   </component>
   <component name="RecentsManager">
@@ -50,6 +50,7 @@
       <recent name="C:\Users\E0576047\Documents\GitHub\DroneSoftControlRL\save_model" />
     </key>
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="C:\Users\E0576047\Documents\GitHub\DroneSoftControlRL\save_model" />
       <recent name="C:\Users\E0576047\Documents\GitHub\DroneSoftControlRL\save_stat" />
     </key>
   </component>
@@ -90,6 +91,27 @@
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
       <option name="SCRIPT_NAME" value="$PROJECT_DIR$/Model_based_A2C.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="PID_BASE" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="RL_Part2" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/save_model" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/save_model/PID_BASE.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -140,34 +162,13 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="plot" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
-      <module name="RL_Part2" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/plot.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="false" />
-      <option name="MODULE_MODE" value="false" />
-      <option name="REDIRECT_INPUT" value="false" />
-      <option name="INPUT_FILE" value="" />
-      <method v="2" />
-    </configuration>
     <recent_temporary>
       <list>
         <item itemvalue="Python.Model_based_A2C" />
+        <item itemvalue="Python.PID_BASE" />
         <item itemvalue="Python.a2c" />
         <item itemvalue="Python.Td3_continuous" />
         <item itemvalue="Python.Continuous_A2C" />
-        <item itemvalue="Python.plot" />
       </list>
     </recent_temporary>
   </component>
@@ -225,60 +226,60 @@
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
     <state x="690" y="267" key="#com.intellij.refactoring.safeDelete.UnsafeUsagesDialog/0.0.1920.1040@0.0.1920.1040" timestamp="1605065824000" />
-    <state x="632" y="185" key="FileChooserDialogImpl" timestamp="1604727134170">
+    <state x="632" y="185" key="FileChooserDialogImpl" timestamp="1605262572846">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
     <state x="421" y="135" key="FileChooserDialogImpl/0.0.1280.760/2560.0.2560.1400@0.0.1280.760" timestamp="1604235438128" />
     <state x="421" y="135" key="FileChooserDialogImpl/0.0.1280.760@0.0.1280.760" timestamp="1604038208470" />
-    <state x="632" y="185" key="FileChooserDialogImpl/0.0.1920.1040@0.0.1920.1040" timestamp="1604727134170" />
+    <state x="632" y="185" key="FileChooserDialogImpl/0.0.1920.1040@0.0.1920.1040" timestamp="1605262572846" />
     <state x="570" y="0" key="FileDocumentManager.FileCacheConflict" timestamp="1605150456130">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
     <state x="570" y="0" key="FileDocumentManager.FileCacheConflict/0.0.1920.1040@0.0.1920.1040" timestamp="1605150456130" />
-    <state width="1899" height="282" key="GridCell.Tab.0.bottom" timestamp="1605169776793">
+    <state width="1899" height="282" key="GridCell.Tab.0.bottom" timestamp="1605264322082">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
     <state width="1238" height="399" key="GridCell.Tab.0.bottom/0.0.1280.760/2560.0.2560.1400@0.0.1280.760" timestamp="1604252672192" />
     <state width="2517" height="399" key="GridCell.Tab.0.bottom/0.0.1280.760/2560.0.2560.1400@2560.0.2560.1400" timestamp="1604247986400" />
     <state width="1238" height="329" key="GridCell.Tab.0.bottom/0.0.1280.760@0.0.1280.760" timestamp="1604385703830" />
-    <state width="1899" height="282" key="GridCell.Tab.0.bottom/0.0.1920.1040@0.0.1920.1040" timestamp="1605169776793" />
-    <state width="1899" height="282" key="GridCell.Tab.0.center" timestamp="1605169776793">
+    <state width="1899" height="282" key="GridCell.Tab.0.bottom/0.0.1920.1040@0.0.1920.1040" timestamp="1605264322082" />
+    <state width="1899" height="282" key="GridCell.Tab.0.center" timestamp="1605264322082">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
     <state width="1238" height="399" key="GridCell.Tab.0.center/0.0.1280.760/2560.0.2560.1400@0.0.1280.760" timestamp="1604252672192" />
     <state width="2517" height="399" key="GridCell.Tab.0.center/0.0.1280.760/2560.0.2560.1400@2560.0.2560.1400" timestamp="1604247986400" />
     <state width="1238" height="329" key="GridCell.Tab.0.center/0.0.1280.760@0.0.1280.760" timestamp="1604385703830" />
-    <state width="1899" height="282" key="GridCell.Tab.0.center/0.0.1920.1040@0.0.1920.1040" timestamp="1605169776793" />
-    <state width="1899" height="282" key="GridCell.Tab.0.left" timestamp="1605169776793">
+    <state width="1899" height="282" key="GridCell.Tab.0.center/0.0.1920.1040@0.0.1920.1040" timestamp="1605264322082" />
+    <state width="1899" height="282" key="GridCell.Tab.0.left" timestamp="1605264322082">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
     <state width="1238" height="399" key="GridCell.Tab.0.left/0.0.1280.760/2560.0.2560.1400@0.0.1280.760" timestamp="1604252672192" />
     <state width="2517" height="399" key="GridCell.Tab.0.left/0.0.1280.760/2560.0.2560.1400@2560.0.2560.1400" timestamp="1604247986400" />
     <state width="1238" height="329" key="GridCell.Tab.0.left/0.0.1280.760@0.0.1280.760" timestamp="1604385703830" />
-    <state width="1899" height="282" key="GridCell.Tab.0.left/0.0.1920.1040@0.0.1920.1040" timestamp="1605169776793" />
-    <state width="1899" height="282" key="GridCell.Tab.0.right" timestamp="1605169776793">
+    <state width="1899" height="282" key="GridCell.Tab.0.left/0.0.1920.1040@0.0.1920.1040" timestamp="1605264322082" />
+    <state width="1899" height="282" key="GridCell.Tab.0.right" timestamp="1605264322082">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
     <state width="1238" height="399" key="GridCell.Tab.0.right/0.0.1280.760/2560.0.2560.1400@0.0.1280.760" timestamp="1604252672192" />
     <state width="2517" height="399" key="GridCell.Tab.0.right/0.0.1280.760/2560.0.2560.1400@2560.0.2560.1400" timestamp="1604247986400" />
     <state width="1238" height="329" key="GridCell.Tab.0.right/0.0.1280.760@0.0.1280.760" timestamp="1604385703830" />
-    <state width="1899" height="282" key="GridCell.Tab.0.right/0.0.1920.1040@0.0.1920.1040" timestamp="1605169776793" />
-    <state width="1899" height="348" key="GridCell.Tab.1.bottom" timestamp="1605168891057">
+    <state width="1899" height="282" key="GridCell.Tab.0.right/0.0.1920.1040@0.0.1920.1040" timestamp="1605264322082" />
+    <state width="1899" height="348" key="GridCell.Tab.1.bottom" timestamp="1605262084618">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state width="1899" height="348" key="GridCell.Tab.1.bottom/0.0.1920.1040@0.0.1920.1040" timestamp="1605168891057" />
-    <state width="1899" height="348" key="GridCell.Tab.1.center" timestamp="1605168891057">
+    <state width="1899" height="348" key="GridCell.Tab.1.bottom/0.0.1920.1040@0.0.1920.1040" timestamp="1605262084618" />
+    <state width="1899" height="348" key="GridCell.Tab.1.center" timestamp="1605262084618">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state width="1899" height="348" key="GridCell.Tab.1.center/0.0.1920.1040@0.0.1920.1040" timestamp="1605168891057" />
-    <state width="1899" height="348" key="GridCell.Tab.1.left" timestamp="1605168891057">
+    <state width="1899" height="348" key="GridCell.Tab.1.center/0.0.1920.1040@0.0.1920.1040" timestamp="1605262084618" />
+    <state width="1899" height="348" key="GridCell.Tab.1.left" timestamp="1605262084618">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state width="1899" height="348" key="GridCell.Tab.1.left/0.0.1920.1040@0.0.1920.1040" timestamp="1605168891057" />
-    <state width="1899" height="348" key="GridCell.Tab.1.right" timestamp="1605168891057">
+    <state width="1899" height="348" key="GridCell.Tab.1.left/0.0.1920.1040@0.0.1920.1040" timestamp="1605262084618" />
+    <state width="1899" height="348" key="GridCell.Tab.1.right" timestamp="1605262084618">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state width="1899" height="348" key="GridCell.Tab.1.right/0.0.1920.1040@0.0.1920.1040" timestamp="1605168891057" />
+    <state width="1899" height="348" key="GridCell.Tab.1.right/0.0.1920.1040@0.0.1920.1040" timestamp="1605262084618" />
     <state x="461" y="165" key="SettingsEditor" timestamp="1604727018595">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
@@ -312,7 +313,7 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/Td3_continuous.py</url>
-          <line>445</line>
+          <line>443</line>
           <option name="timeStamp" value="9" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">

@@ -65,7 +65,7 @@ class windENV():
 
             if collided or slow:
                 collision_count += 1
-            if collision_count > 5:
+            if collision_count > 0:
                 has_collided = True
                 break
 
@@ -138,8 +138,8 @@ class windENV():
         return reward
 
     def add_wind(self):
-        w1 = np.random.randint(0,3)
-        w2 = np.random.randint(0,3)
+        w1 = np.random.randint(2,5)
+        w2 = np.random.randint(2,5)
         w3 = np.random.randint(0,3)
         wind = airsim.Vector3r(w1,w2,w3)
         print(f'add wind vector = {wind}')

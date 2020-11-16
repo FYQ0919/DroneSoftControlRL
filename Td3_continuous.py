@@ -336,8 +336,6 @@ def img_pre(responses, img_height, img_width):
 def transform_action(action):
     real_action = np.array(action)
     real_action[0] += 0.5
-    # real_action[0] *= 0.5
-    # real_action[2] *= 0.5
 
     return real_action
 

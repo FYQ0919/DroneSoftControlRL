@@ -336,38 +336,51 @@ def transform_input(responses, img_height, img_width):
     return image
 
 
-def interpret_action(action):
+def interpret_action(action,episode):
     scaling_factor = 1.0
 
     forward_factor = 0.2
 
-    if action == 0:
+    epsilon = 0.01 + 0.99 * np.exp(-0.1 * episode)
 
-        quad_offset = (scaling_factor + forward_factor,0 ,-scaling_factor)
+    if np.random.uniform(0, 1) > epsilon:
 
-    elif action == 1:
+        if action == 0:
 
-        quad_offset = (scaling_factor + forward_factor, 0, 0)
+            quad_offset = (scaling_factor + forward_factor,0 ,-forward_factor)
 
-    elif action == 2:
+        elif action == 1:
 
-        quad_offset = (forward_factor, scaling_factor, 0)
+            quad_offset = (scaling_factor + forward_factor, 0, 0)
 
-    elif action == 3:
+        elif action == 2:
 
-        quad_offset = (forward_factor, 0, scaling_factor)
+            quad_offset = (forward_factor, scaling_factor, 0)
 
-    elif action == 4:
+        elif action == 3:
 
-        quad_offset = (-scaling_factor + forward_factor, 0, 0)
+            quad_offset = (forward_factor, 0, scaling_factor)
 
-    elif action == 5:
+        elif action == 4:
 
-        quad_offset = (forward_factor, -scaling_factor, 0)
+            quad_offset = (-scaling_factor + forward_factor, 0, 0)
 
-    elif action == 6:
+        elif action == 5:
 
-        quad_offset = (forward_factor, 0, -scaling_factor)
+            quad_offset = (forward_factor, -scaling_factor, 0)
+
+        elif action == 6:
+
+            quad_offset = (forward_factor, 0, -scaling_factor)
+
+
+    else:
+
+        x, y, z = np.random.randint(-1, 1, 3)
+
+        quad_offset = tuple([x, y, z])
+
+        print("explore!!!")
 
     return quad_offset
 
@@ -488,7 +501,7 @@ if __name__ == '__main__':
 
                     action, policy = agent.get_action(state)
 
-                    real_action = interpret_action(action)
+                    real_action = interpret_action(action,episode)
 
                     observe, reward, done, bias = env.step(real_action, bias)
 
@@ -547,6 +560,13 @@ if __name__ == '__main__':
 
         global_step = 0
 
+        if os.path.exists('save_stat/' + agent_name + '_stat.csv'):
+            with open('save_stat/' + agent_name + '_stat.csv', 'r') as f:
+                read = csv.reader(f)
+                episode = int(float(next(reversed(list(read)))[0]))
+                print('Last episode:', episode)
+                episode += 1
+
         while True:
 
             try:
@@ -588,7 +608,7 @@ if __name__ == '__main__':
 
                     action, policy = agent.get_action(state)
 
-                    real_action = interpret_action(action)
+                    real_action = interpret_action(action,episode)
 
                     print(f'real action is {real_action}')
 
